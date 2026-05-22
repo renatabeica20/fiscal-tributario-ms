@@ -70,7 +70,15 @@ function detectarPerguntas(texto) {
 }
 
 function temPerguntas(texto) {
-  return detectarPerguntas(texto).length >= 2
+  // Só abre formulário quando o agente usar o gatilho explícito
+  const gatilhos = [
+    'DADOS NECESSÁRIOS PARA O DOCUMENTO:',
+    'DADOS NECESSÁRIOS:',
+    'PRECISO DOS SEGUINTES DADOS:',
+  ]
+  const temGatilho = gatilhos.some(g => texto.toUpperCase().includes(g))
+  if (!temGatilho) return false
+  return detectarPerguntas(texto).length >= 1
 }
 
 function formatarRespostas(perguntas) {
