@@ -308,12 +308,13 @@ const renderCampo = (perg, msgIdx, pi) => {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <div className={styles.headerLeft}>
+        <div className={styles.headerContent}>
           <div className={styles.logo}>§</div>
-          <div>
+          <div className={styles.headerTexto}>
             <h1 className={styles.titulo}>Oráculo Fiscal MS</h1>
             <p className={styles.subtitulo}>Consultoria Jurídico-Tributária e Apoio à Fiscalização Volante — SEFAZ-MS</p>
           </div>
+          <div className={styles.headerBadge}>Lei 1.810/97 · RICMS/MS</div>
         </div>
       </header>
 
@@ -431,11 +432,11 @@ function formatarTexto(txt) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/&lt;div class="materiaBox"&gt;/g, '<div style="border-left:3px solid #d4a843;padding:12px 16px;margin:10px 0;background:#0d1117;border-radius:0 6px 6px 0">')
+    .replace(/&lt;div class="materiaBox"&gt;/g, '<div style="border-left:3px solid #1a4a8a;padding:12px 16px;margin:10px 0;background:#f0f4f8;border-radius:0 6px 6px 0">')
     .replace(/&lt;\/div&gt;/g, '</div>')
-    .replace(/^## (.+)$/gm, '<h3 style="color:#d4a843;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace">$1</h3>')
-    .replace(/^# (.+)$/gm, '<h3 style="color:#d4a843;font-size:0.9rem;margin:16px 0 8px;font-weight:600">$1</h3>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4a843">$1</strong>')
+    .replace(/^## (.+)$/gm, '<h3 style="color:#1a4a8a;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace;font-weight:700">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h3 style="color:#1a4a8a;font-size:0.92rem;margin:16px 0 8px;font-weight:700">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#1a4a8a">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
 
   const paragrafos = html.split('\n\n')
