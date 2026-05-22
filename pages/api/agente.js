@@ -42,7 +42,7 @@ DOCUMENTOS QUE VOCÊ REDIGE:
 
 TVF (Termo de Verificação Fiscal):
 - Usado quando há irregularidade mas mercadoria é liberada
-- Texto formal e detalhado
+- Texto em CAIXA ALTA, formal, detalhado
 - Campos: Descrição do fato, Enquadramento, Penalidade, Detalhamento (campo 8)
 
 TA (Termo de Apreensão):
@@ -64,13 +64,21 @@ REGRAS DE ENQUADRAMENTO:
 - Código da infração doc inidônea: 593
 - Código do enquadramento: 178
 
-PADRÃO DE TEXTO DO CAMPO 8:
+PADRÃO DE TEXTO DA MATÉRIA TRIBUTÁRIA:
 - Redigir em português formal, com gramática correta, sem caixa alta
-- Começa com: "Em diligência fiscal realizada em [data], às [hora], em [local], município de [município]/MS..."
-- Descreve cronologicamente: abordagem → documentos apresentados → irregularidade constatada → consulta ao sistema → enquadramento jurídico → responsabilidade → intimação
-- Parágrafos bem estruturados, um por etapa da narrativa
-- Cita artigos no formato: "nos termos do art. X, inciso Y, alínea Z, da Lei nº 1.810/97, c/c art. X do RICMS/MS (Decreto nº 9.203/98)"
-- Linguagem técnica e precisa, mas legível
+- Texto OBJETIVO e CONCISO — apenas o essencial para a matriz de incidência do fato gerador
+- Estrutura obrigatória em parágrafos curtos:
+  1. Abordagem: data, hora, local, veículo, condutor, empresa transportadora
+  2. Mercadoria e documentação apresentada (ou ausência dela)
+  3. Irregularidade constatada e enquadramento legal
+  4. Responsabilidade tributária (remetente e/ou transportador)
+  5. Crédito tributário: base de cálculo, alíquota, ICMS, multa, total
+- Citar apenas os artigos essenciais: "nos termos do art. X da Lei nº 1.810/97"
+- Sem repetições, sem narrativa excessiva, sem detalhes desnecessários
+- SEMPRE delimitar a matéria tributária com as marcações:
+  ===MATERIA_INICIO===
+  [texto da matéria]
+  ===MATERIA_FIM==="
 
 LEGISLAÇÃO DE REFERÊNCIA RÁPIDA:
 ${BASE_LEI}
@@ -89,10 +97,12 @@ COMPORTAMENTO:
 - Nunca invente dispositivos legais`
 
   try {
+    // Buscar legislação relevante no Supabase (RAG)
     let contextoLegislativo = ''
-
+    
     if (OPENAI_KEY && SUPABASE_URL && SUPABASE_KEY) {
       try {
+        // Gerar embedding da pergunta
         const embResp = await fetch('https://api.openai.com/v1/embeddings', {
           method: 'POST',
           headers: {
@@ -109,6 +119,7 @@ COMPORTAMENTO:
           const embData = await embResp.json()
           const embedding = embData.data[0].embedding
 
+          // Buscar trechos relevantes no Supabase
           const sbResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/buscar_legislacao`, {
             method: 'POST',
             headers: {
@@ -131,15 +142,20 @@ COMPORTAMENTO:
           }
         }
       } catch (ragErr) {
-        console.warn('RAG falhou:', ragErr.message)
+        console.warn('RAG falhou, continuando sem contexto extra:', ragErr.message)
       }
     }
 
+    // Montar mensagens com histórico
     const msgs = [
       ...(historico || []),
-      { role: 'user', content: mensagem + contextoLegislativo }
+      {
+        role: 'user',
+        content: mensagem + contextoLegislativo
+      }
     ]
 
+    // Chamar Anthropic
     const antResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
