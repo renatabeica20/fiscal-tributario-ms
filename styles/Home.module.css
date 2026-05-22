@@ -13,42 +13,70 @@
 
 /* HEADER */
 .header {
-  background: #1a4a8a;
-  border-bottom: 3px solid #f0a500;
-  padding: 12px 24px;
+  background: linear-gradient(135deg, #0d2f5e 0%, #1a4a8a 60%, #1e56a0 100%);
+  border-bottom: 4px solid #e8a000;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+}
+
+.headerContent {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  padding: 14px 28px;
+  flex: 1;
+}
+
+.logo {
+  width: 46px;
+  height: 46px;
+  background: #e8a000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #0d2f5e;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-.logo {
-  width: 40px;
-  height: 40px;
-  background: #f0a500;
-  border-radius: 6px;
+.headerTexto {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #1a2332;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .titulo {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
 }
 
 .subtitulo {
   font-size: 0.72rem;
-  color: #a8c4e0;
-  margin-top: 2px;
+  color: #8ab4d8;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.headerBadge {
+  margin-left: auto;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.7rem;
+  color: #a8c8e8;
   font-family: monospace;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 /* CHAT */
@@ -136,14 +164,14 @@
 .avatar {
   width: 36px;
   height: 36px;
-  background: #f0a500;
+  background: #1a4a8a;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
   font-weight: bold;
-  color: #1a2332;
+  color: #ffffff;
   flex-shrink: 0;
   margin-top: 2px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
