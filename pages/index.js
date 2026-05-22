@@ -1,14 +1,59 @@
 import { useState, useRef, useEffect } from 'react'
 import styles from '../styles/Home.module.css'
 
+function detectarTipoCampo(texto) {
+  const t = texto.toLowerCase()
+  if (t.includes('data') || t.includes('quando')) return 'date'
+  if (t.includes('cpf')) return 'cpf'
+  if (t.includes('cnpj')) return 'cnpj'
+  if (t.includes('inscrição estadual') || t.includes('ie/') || t.includes('ie ') || t.includes('ie:')) return 'ie'
+  if (t.includes('valor') || t.includes('r$') || t.includes('preço') || t.includes('base de cálculo')) return 'valor'
+  if (t.includes('placa')) return 'placa'
+  if (t.includes('cep')) return 'cep'
+  if (t.includes('telefone') || t.includes('fone')) return 'telefone'
+  return 'texto'
+}
+
+function aplicarMascara(valor, tipo) {
+  const n = valor.replace(/\D/g, '')
+  switch (tipo) {
+    case 'cpf':
+      return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4').substring(0, 14)
+    case 'cnpj':
+      return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5').substring(0, 18)
+    case 'ie':
+      return n.substring(0, 12).replace(/(\d{2})(\d{3})(\d{3})(\d{1,})/, '$1.$2.$3-$4')
+    case 'placa':
+      return valor.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7)
+        .replace(/([A-Z]{3})(\d{4})/, '$1-$2')
+    case 'cep':
+      return n.replace(/(\d{5})(\d{3})/, '$1-$2').substring(0, 9)
+    case 'telefone':
+      return n.length <= 10
+        ? n.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3').substring(0, 14)
+        : n.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').substring(0, 15)
+    case 'valor':
+      const num = parseFloat(n) / 100
+      return isNaN(num) ? '' : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    default:
+      return valor
+  }
+}
+
 function detectarPerguntas(texto) {
   const linhas = texto.split('\n')
   const perguntas = []
-  const regex = /^(\d+)\.\s+(.+)/
+  const regex = /^(\d+)\.\s+\*{0,2}(.+?)\*{0,2}$/
   for (const linha of linhas) {
-    const match = linha.match(regex)
+    const match = linha.trim().match(regex)
     if (match) {
-      perguntas.push({ numero: match[1], texto: match[2].trim(), resposta: '' })
+      const textoPergunta = match[2].trim()
+      perguntas.push({
+        numero: match[1],
+        texto: textoPergunta,
+        resposta: '',
+        tipo: detectarTipoCampo(textoPergunta)
+      })
     }
   }
   return perguntas
@@ -96,9 +141,9 @@ export default function Home() {
     const perguntas = respostasAtivas[msgIdx]
     if (!perguntas) return
 
-    const todasPreenchidas = perguntas.every(p => p.resposta.trim())
-    if (!todasPreenchidas) {
-      alert('Preencha todas as respostas antes de enviar.')
+    const vazias = perguntas.filter(p => !p.resposta.trim())
+    if (vazias.length > 0) {
+      alert('Preencha todos os campos antes de enviar.')
       return
     }
 
@@ -113,10 +158,11 @@ export default function Home() {
     enviar(msgFormatada)
   }
 
-  const atualizarResposta = (msgIdx, perguntaIdx, valor) => {
+  const atualizarResposta = (msgIdx, perguntaIdx, valor, tipo) => {
+    const valorFormatado = aplicarMascara(valor, tipo)
     setRespostasAtivas(r => {
       const perguntas = [...(r[msgIdx] || [])]
-      perguntas[perguntaIdx] = { ...perguntas[perguntaIdx], resposta: valor }
+      perguntas[perguntaIdx] = { ...perguntas[perguntaIdx], resposta: valorFormatado }
       return { ...r, [msgIdx]: perguntas }
     })
   }
@@ -154,6 +200,52 @@ export default function Home() {
     'Quando lavrar TA em vez de TVF?',
     'Responsabilidade solidária do transportador'
   ]
+
+  const renderCampo = (perg, msgIdx, pi) => {
+    const valor = perg.resposta || ''
+
+    if (perg.tipo === 'date') {
+      return (
+        <input
+          type="date"
+          className={styles.campoInput}
+          value={valor}
+          onChange={e => atualizarResposta(msgIdx, pi, e.target.value, 'date')}
+        />
+      )
+    }
+
+    if (['cpf', 'cnpj', 'ie', 'placa', 'cep', 'telefone', 'valor'].includes(perg.tipo)) {
+      return (
+        <input
+          type="text"
+          className={styles.campoInput}
+          value={valor}
+          onChange={e => atualizarResposta(msgIdx, pi, e.target.value, perg.tipo)}
+          placeholder={
+            perg.tipo === 'cpf' ? '000.000.000-00' :
+            perg.tipo === 'cnpj' ? '00.000.000/0000-00' :
+            perg.tipo === 'ie' ? '00.000.000-0' :
+            perg.tipo === 'placa' ? 'ABC-1234' :
+            perg.tipo === 'cep' ? '00000-000' :
+            perg.tipo === 'telefone' ? '(67) 99999-9999' :
+            perg.tipo === 'valor' ? 'R$ 0,00' : ''
+          }
+          inputMode={perg.tipo === 'valor' ? 'numeric' : 'text'}
+        />
+      )
+    }
+
+    return (
+      <textarea
+        className={styles.campoInput}
+        value={valor}
+        onChange={e => atualizarResposta(msgIdx, pi, e.target.value, 'texto')}
+        placeholder="Digite sua resposta..."
+        rows={2}
+      />
+    )
+  }
 
   return (
     <div className={styles.app}>
@@ -207,20 +299,14 @@ export default function Home() {
                   {respostasAtivas[msgIdx] ? (
                     <div className={styles.formulario}>
                       <p className={styles.formularioIntro}>
-                        {msg.texto.split('\n')[0]}
+                        {msg.texto.split('\n')[0].replace(/[#*]/g, '').trim()}
                       </p>
                       {respostasAtivas[msgIdx].map((perg, pi) => (
                         <div key={pi} className={styles.campo}>
                           <label className={styles.campoLabel}>
                             {perg.numero}. {perg.texto}
                           </label>
-                          <textarea
-                            className={styles.campoInput}
-                            value={perg.resposta}
-                            onChange={e => atualizarResposta(msgIdx, pi, e.target.value)}
-                            placeholder="Digite sua resposta..."
-                            rows={2}
-                          />
+                          {renderCampo(perg, msgIdx, pi)}
                         </div>
                       ))}
                       <button
@@ -286,7 +372,8 @@ function formatarTexto(txt) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/## (.+)/g, '<h3 style="color:#d4a843;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h3 style="color:#d4a843;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h3 style="color:#d4a843;font-size:0.9rem;margin:16px 0 8px;font-weight:600">$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4a843">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
 
