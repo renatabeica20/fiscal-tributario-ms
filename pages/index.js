@@ -176,11 +176,6 @@ export default function Home() {
     }
   }
 
-  const usarSugestao = (texto) => {
-    setInput(texto)
-    inputRef.current?.focus()
-  }
-
   const copiarTexto = (texto) => {
     navigator.clipboard.writeText(texto)
       .then(() => alert('Texto copiado!'))
@@ -194,14 +189,6 @@ export default function Home() {
         alert('Texto copiado!')
       })
   }
-
-  const sugestoes = [
-    'Mercadoria sem nota fiscal — como enquadrar?',
-    'Nota fiscal com destinatário diverso do local de entrega',
-    'Qual a alíquota interna de bebidas no MS?',
-    'Quando lavrar TA em vez de TVF?',
-    'Responsabilidade solidária do transportador'
-  ]
 
   const renderCampo = (perg, msgIdx, pi) => {
     const valor = perg.resposta || ''
@@ -272,11 +259,6 @@ export default function Home() {
             <h2>Fiscal Tributário Estadual — MS</h2>
             <p>Especialista em legislação tributária estadual do MS.<br />
             Analisa casos de fiscalização volante, enquadra infrações e redige documentos fiscais.</p>
-            <div className={styles.sugestoes}>
-              {sugestoes.map((s, i) => (
-                <button key={i} className={styles.sugestao} onClick={() => usarSugestao(s)}>{s}</button>
-              ))}
-            </div>
           </div>
         )}
 
