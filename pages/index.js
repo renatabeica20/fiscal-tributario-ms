@@ -261,8 +261,8 @@ const renderCampo = (perg, msgIdx, pi) => {
         <div className={styles.headerLeft}>
           <div className={styles.logo}>§</div>
           <div>
-            <h1 className={styles.titulo}>Fiscal Tributário Estadual - MS</h1>
-            <p className={styles.subtitulo}>SEFAZ-MS · Lei 1.810/97 · RICMS/MS · Decreto 9.203/98</p>
+            <h1 className={styles.titulo}>Oráculo Fiscal MS</h1>
+            <p className={styles.subtitulo}>Consultoria Jurídico-Tributária e Apoio à Fiscalização Volante — SEFAZ-MS</p>
           </div>
         </div>
       </header>
@@ -270,9 +270,9 @@ const renderCampo = (perg, msgIdx, pi) => {
       <div className={styles.chat} ref={chatRef}>
         {mensagens.length === 0 && (
           <div className={styles.welcome}>
-            <h2>Fiscal Tributário Estadual — MS</h2>
-            <p>Especialista em legislação tributária estadual do MS.<br />
-            Analisa casos de fiscalização volante, enquadra infrações e redige documentos fiscais.</p>
+            <h2>Oráculo Fiscal MS</h2>
+            <p>Consultoria jurídico-tributária especializada em legislação do MS.<br />
+            Análise de casos, enquadramento legal e elaboração de documentos fiscais.</p>
 </div>
         )}
 
