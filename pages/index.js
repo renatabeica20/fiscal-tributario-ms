@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import styles from '../styles/Home.module.css'
 
+// Detecta tipo de campo pela pergunta
 function detectarTipoCampo(texto) {
   const t = texto.toLowerCase()
+  // Campos que contêm nome/razão social são sempre texto livre
   if (t.includes('nome') || t.includes('razão social') || t.includes('razao social')) return 'texto'
   if (t.includes('data') || t.includes('quando')) return 'date'
+  // CPF sozinho (sem nome junto)
   if (t.includes('cpf') && !t.includes('nome') && !t.includes('condutor') && !t.includes('motorista')) return 'cpf'
+  // CNPJ sozinho (sem razão social junto)
   if (t.includes('cnpj') && !t.includes('razão') && !t.includes('razao') && !t.includes('empresa') && !t.includes('transportadora') && !t.includes('destinatária') && !t.includes('destinatario') && !t.includes('remetente')) return 'cnpj'
   if (t.includes('inscrição estadual') || t.includes('ie/') || (t.includes('ie ') && !t.includes('serie'))) return 'ie'
   if (t.includes('valor') || t.includes('r$') || t.includes('preço') || t.includes('base de cálculo')) return 'valor'
@@ -15,6 +19,7 @@ function detectarTipoCampo(texto) {
   return 'texto'
 }
 
+// Máscaras
 function aplicarMascara(valor, tipo) {
   const n = valor.replace(/\D/g, '')
   switch (tipo) {
@@ -26,8 +31,9 @@ function aplicarMascara(valor, tipo) {
       return n.substring(0, 12).replace(/(\d{2})(\d{3})(\d{3})(\d{1,})/, '$1.$2.$3-$4')
     case 'placa':
       const p = valor.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7)
-      if (/^[A-Z]{3}\d[A-Z]\d{2}$/.test(p)) return p
-      return p.replace(/([A-Z]{3})(\d+)/, '$1-$2')
+      // Mercosul: ABC1D23 — Antigo: ABC1234
+      if (/^[A-Z]{3}\d[A-Z]\d{2}$/.test(p)) return p.substring(0,3) + p.substring(3) // Mercosul sem hífen
+      return p.replace(/([A-Z]{3})(\d+)/, '$1-$2') // Antigo com hífen
     case 'cep':
       return n.replace(/(\d{5})(\d{3})/, '$1-$2').substring(0, 9)
     case 'telefone':
@@ -45,7 +51,9 @@ function aplicarMascara(valor, tipo) {
 function detectarPerguntas(texto) {
   const linhas = texto.split('\n')
   const perguntas = []
+  // Captura perguntas com ou sem negrito: "1. texto" ou "1. **texto**"
   const regex = /^(\d+)\.\s+\*{0,2}(.+?)\*{0,2}$/
+
   for (const linha of linhas) {
     const match = linha.trim().match(regex)
     if (match) {
@@ -145,7 +153,7 @@ export default function Home() {
 
     const vazias = perguntas.filter(p => !p.resposta.trim())
     if (vazias.length > 0) {
-      alert('Preencha todos os campos antes de enviar.')
+      alert(`Preencha todos os campos antes de enviar.`)
       return
     }
 
@@ -176,19 +184,40 @@ export default function Home() {
     }
   }
 
+  const usarSugestao = (texto) => {
+    setInput(texto)
+    inputRef.current?.focus()
+  }
+
   const copiarTexto = (texto) => {
-    navigator.clipboard.writeText(texto)
-      .then(() => alert('Texto copiado!'))
+    // Extrair apenas a matéria tributária entre os marcadores
+    let textoCopiar = texto
+    const inicio = texto.indexOf('===MATERIA_INICIO===')
+    const fim = texto.indexOf('===MATERIA_FIM===')
+    if (inicio !== -1 && fim !== -1) {
+      textoCopiar = texto.substring(inicio + 20, fim).trim()
+    }
+
+    navigator.clipboard.writeText(textoCopiar)
+      .then(() => alert('Matéria tributária copiada!'))
       .catch(() => {
         const el = document.createElement('textarea')
-        el.value = texto
+        el.value = textoCopiar
         document.body.appendChild(el)
         el.select()
         document.execCommand('copy')
         document.body.removeChild(el)
-        alert('Texto copiado!')
+        alert('Matéria tributária copiada!')
       })
   }
+
+  const sugestoes = [
+    'Mercadoria sem nota fiscal — como enquadrar?',
+    'Nota fiscal com destinatário diverso do local de entrega',
+    'Qual a alíquota interna de bebidas no MS?',
+    'Quando lavrar TA em vez de TVF?',
+    'Responsabilidade solidária do transportador'
+  ]
 
   const renderCampo = (perg, msgIdx, pi) => {
     const valor = perg.resposta || ''
@@ -215,7 +244,7 @@ export default function Home() {
             perg.tipo === 'cpf' ? '000.000.000-00' :
             perg.tipo === 'cnpj' ? '00.000.000/0000-00' :
             perg.tipo === 'ie' ? '00.000.000-0' :
-            perg.tipo === 'placa' ? 'ABC-1234 ou ABC1D23' :
+            perg.tipo === 'placa' ? 'ABC-1234' :
             perg.tipo === 'cep' ? '00000-000' :
             perg.tipo === 'telefone' ? '(67) 99999-9999' :
             perg.tipo === 'valor' ? 'R$ 0,00' : ''
@@ -259,6 +288,11 @@ export default function Home() {
             <h2>Fiscal Tributário Estadual — MS</h2>
             <p>Especialista em legislação tributária estadual do MS.<br />
             Analisa casos de fiscalização volante, enquadra infrações e redige documentos fiscais.</p>
+            <div className={styles.sugestoes}>
+              {sugestoes.map((s, i) => (
+                <button key={i} className={styles.sugestao} onClick={() => usarSugestao(s)}>{s}</button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -343,10 +377,15 @@ export default function Home() {
 }
 
 function formatarTexto(txt) {
+  // Ocultar marcadores da matéria tributária na exibição
   let html = txt
+    .replace(/===MATERIA_INICIO===/g, '<div class="materiaBox">')
+    .replace(/===MATERIA_FIM===/g, '</div>')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+    .replace(/&lt;div class="materiaBox"&gt;/g, '<div style="border-left:3px solid #d4a843;padding:12px 16px;margin:10px 0;background:#0d1117;border-radius:0 6px 6px 0">')
+    .replace(/&lt;\/div&gt;/g, '</div>')
     .replace(/^## (.+)$/gm, '<h3 style="color:#d4a843;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace">$1</h3>')
     .replace(/^# (.+)$/gm, '<h3 style="color:#d4a843;font-size:0.9rem;margin:16px 0 8px;font-weight:600">$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4a843">$1</strong>')
