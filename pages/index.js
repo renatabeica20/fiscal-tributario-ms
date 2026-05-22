@@ -101,13 +101,29 @@ export default function Home() {
   const [carregando, setCarregando] = useState(false)
   const [historico, setHistorico] = useState([])
   const [respostasAtivas, setRespostasAtivas] = useState({})
+  const [inputExpandido, setInputExpandido] = useState(false)
   const chatRef = useRef(null)
   const inputRef = useRef(null)
 
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight
+    if (!chatRef.current) return
+
+    // Quando terminar de carregar, rola até o início da última mensagem do agente
+    if (!carregando && mensagens.length > 0) {
+      const ultima = mensagens[mensagens.length - 1]
+      if (ultima.tipo === 'agent') {
+        // Encontrar o último elemento de mensagem do agente
+        const msgs = chatRef.current.querySelectorAll('[data-tipo="agent"]')
+        if (msgs.length > 0) {
+          const ultimaMsg = msgs[msgs.length - 1]
+          ultimaMsg.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          return
+        }
+      }
     }
+
+    // Durante carregamento ou mensagem do usuário, scroll para o fim
+    chatRef.current.scrollTop = chatRef.current.scrollHeight
   }, [mensagens, carregando])
 
   const enviar = async (msgCustom) => {
@@ -307,7 +323,7 @@ const renderCampo = (perg, msgIdx, pi) => {
         )}
 
         {mensagens.map((msg, msgIdx) => (
-          <div key={msgIdx} className={`${styles.msg} ${msg.tipo === 'user' ? styles.msgUser : styles.msgAgent}`}>
+          <div key={msgIdx} data-tipo={msg.tipo} className={`${styles.msg} ${msg.tipo === 'user' ? styles.msgUser : styles.msgAgent}`}>
             {msg.tipo === 'agent' && <div className={styles.avatar}>§</div>}
             <div className={`${styles.bubble} ${msg.erro ? styles.bubbleErro : ''}`}>
               {msg.tipo === 'agent' && msg.trechos > 0 && (
@@ -364,15 +380,28 @@ const renderCampo = (perg, msgIdx, pi) => {
 
       <div className={styles.inputArea}>
         <div className={styles.inputWrapper}>
-          <textarea
-            ref={inputRef}
-            className={styles.textarea}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={tecla}
-            placeholder="Descreva o caso ou faça uma pergunta sobre a legislação tributária do MS..."
-            rows={1}
-          />
+          <div className={styles.textareaContainer}>
+            <textarea
+              ref={inputRef}
+              className={styles.textarea}
+              style={{ height: inputExpandido ? '240px' : undefined }}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={tecla}
+              placeholder="Descreva o caso ou faça uma pergunta sobre a legislação tributária do MS..."
+              rows={inputExpandido ? 10 : 1}
+            />
+            <button
+              className={styles.btnExpandir}
+              onClick={() => {
+                setInputExpandido(e => !e)
+                setTimeout(() => inputRef.current?.focus(), 50)
+              }}
+              title={inputExpandido ? 'Recolher' : 'Expandir'}
+            >
+              {inputExpandido ? '▼' : '▲'}
+            </button>
+          </div>
           <button className={styles.btnEnviar} onClick={() => enviar()} disabled={carregando || !input.trim()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -380,7 +409,7 @@ const renderCampo = (perg, msgIdx, pi) => {
             </svg>
           </button>
         </div>
-        <p className={styles.hint}>Enter para enviar · Shift+Enter para nova linha</p>
+        <p className={styles.hint}>Enter para enviar · Shift+Enter para nova linha · ▲ para expandir</p>
       </div>
     </div>
   )
