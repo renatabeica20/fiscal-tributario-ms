@@ -151,12 +151,6 @@ export default function Home() {
     const perguntas = respostasAtivas[msgIdx]
     if (!perguntas) return
 
-    const vazias = perguntas.filter(p => !p.resposta.trim())
-    if (vazias.length > 0) {
-      alert(`Preencha todos os campos antes de enviar.`)
-      return
-    }
-
     const msgFormatada = formatarRespostas(perguntas)
 
     setRespostasAtivas(r => {
