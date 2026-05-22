@@ -107,21 +107,26 @@ export default function Home() {
   useEffect(() => {
     if (!chatRef.current) return
 
-    // Quando terminar de carregar, rola até o início da última mensagem do agente
+    // Quando o agente terminar de responder, rola o CHAT até o início da resposta
     if (!carregando && mensagens.length > 0) {
       const ultima = mensagens[mensagens.length - 1]
       if (ultima.tipo === 'agent') {
-        // Encontrar o último elemento de mensagem do agente
-        const msgs = chatRef.current.querySelectorAll('[data-tipo="agent"]')
-        if (msgs.length > 0) {
-          const ultimaMsg = msgs[msgs.length - 1]
-          ultimaMsg.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          return
-        }
+        setTimeout(() => {
+          const msgs = chatRef.current.querySelectorAll('[data-tipo="agent"]')
+          if (msgs.length > 0) {
+            const ultimaMsg = msgs[msgs.length - 1]
+            // Calcula posição da mensagem relativa ao container do chat
+            const chatTop = chatRef.current.getBoundingClientRect().top
+            const msgTop = ultimaMsg.getBoundingClientRect().top
+            const offset = msgTop - chatTop + chatRef.current.scrollTop - 16
+            chatRef.current.scrollTo({ top: offset, behavior: 'smooth' })
+          }
+        }, 100)
+        return
       }
     }
 
-    // Durante carregamento ou mensagem do usuário, scroll para o fim
+    // Durante carregamento ou após mensagem do usuário, scroll para o fim
     chatRef.current.scrollTop = chatRef.current.scrollHeight
   }, [mensagens, carregando])
 
@@ -323,47 +328,56 @@ const renderCampo = (perg, msgIdx, pi) => {
 
         {mensagens.map((msg, msgIdx) => (
           <div key={msgIdx} data-tipo={msg.tipo} className={`${styles.msg} ${msg.tipo === 'user' ? styles.msgUser : styles.msgAgent}`}>
-            {msg.tipo === 'agent' && <div className={styles.avatar}>§</div>}
-            <div className={`${styles.bubble} ${msg.erro ? styles.bubbleErro : ''}`}>
-              {msg.tipo === 'agent' && msg.trechos > 0 && (
-                <div className={styles.contextoBar}>📚 {msg.trechos} trechos da legislação consultados</div>
-              )}
-              {msg.tipo === 'agent' ? (
-                <>
-                  {respostasAtivas[msgIdx] ? (
-                    <div className={styles.formulario}>
-                      <p className={styles.formularioIntro}>
-                        {msg.texto.split('\n')[0].replace(/[#*]/g, '').trim()}
-                      </p>
-                      {respostasAtivas[msgIdx].map((perg, pi) => (
-                        <div key={pi} className={styles.campo}>
-                          <label className={styles.campoLabel}>
-                            {perg.numero}. {perg.texto}
-                          </label>
-                          {renderCampo(perg, msgIdx, pi)}
-                        </div>
-                      ))}
-                      <button
-                        className={styles.btnEnviarRespostas}
-                        onClick={() => enviarRespostas(msgIdx)}
-                        disabled={carregando}
-                      >
-                        ✓ Enviar respostas e gerar documento
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div dangerouslySetInnerHTML={{ __html: formatarTexto(msg.texto) }} />
-                      <button onClick={(e) => copiarTexto(msg.texto, e.currentTarget)} className={styles.btnCopiar}>
-                        📋 Copiar matéria
-                      </button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <span style={{ whiteSpace: 'pre-wrap' }}>{msg.texto}</span>
-              )}
-            </div>
+
+            {msg.tipo === 'user' ? (
+              <div>
+                <div className={styles.msgUserLabel}>👮 Fiscal</div>
+                <div className={styles.bubble}>
+                  <span style={{ whiteSpace: 'pre-wrap' }}>{msg.texto}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.avatar}>§</div>
+                <div className={styles.msgAgentInner}>
+                  <div className={styles.msgAgentLabel}>⚖ Oráculo Fiscal MS</div>
+                  <div className={`${styles.bubble} ${msg.erro ? styles.bubbleErro : ''}`}>
+                    {msg.trechos > 0 && (
+                      <div className={styles.contextoBar}>📚 {msg.trechos} trechos da legislação consultados</div>
+                    )}
+                    {respostasAtivas[msgIdx] ? (
+                      <div className={styles.formulario}>
+                        <p className={styles.formularioIntro}>
+                          {msg.texto.split('\n')[0].replace(/[#*]/g, '').trim()}
+                        </p>
+                        {respostasAtivas[msgIdx].map((perg, pi) => (
+                          <div key={pi} className={styles.campo}>
+                            <label className={styles.campoLabel}>
+                              {perg.numero}. {perg.texto}
+                            </label>
+                            {renderCampo(perg, msgIdx, pi)}
+                          </div>
+                        ))}
+                        <button
+                          className={styles.btnEnviarRespostas}
+                          onClick={() => enviarRespostas(msgIdx)}
+                          disabled={carregando}
+                        >
+                          ✓ Enviar respostas e gerar documento
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div dangerouslySetInnerHTML={{ __html: formatarTexto(msg.texto) }} />
+                        <button onClick={(e) => copiarTexto(msg.texto, e.currentTarget)} className={styles.btnCopiar}>
+                          📋 Copiar matéria
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         ))}
 
@@ -385,13 +399,16 @@ const renderCampo = (perg, msgIdx, pi) => {
             value={input}
             onChange={e => {
               setInput(e.target.value)
-              // Auto-expand: cresce conforme o conteúdo, sem limite
               e.target.style.height = 'auto'
               e.target.style.height = e.target.scrollHeight + 'px'
             }}
             onKeyDown={tecla}
             placeholder="Descreva o caso ou faça uma pergunta sobre a legislação tributária do MS..."
             rows={1}
+            spellCheck={true}
+            lang="pt-BR"
+            autoCorrect="on"
+            autoCapitalize="sentences"
           />
           <button className={styles.btnEnviar} onClick={() => enviar()} disabled={carregando || !input.trim()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
