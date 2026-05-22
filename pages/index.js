@@ -6,12 +6,20 @@ function detectarTipoCampo(texto) {
   const t = texto.toLowerCase()
   // Campos que contêm nome/razão social são sempre texto livre
   if (t.includes('nome') || t.includes('razão social') || t.includes('razao social')) return 'texto'
-  if (t.includes('data') || t.includes('quando')) return 'date'
+  if ((t === 'data da abordagem' || t === 'data da fiscalização' || 
+       t === 'data' || t === 'quando ocorreu') ) return 'date'
+  if (t.includes('data') && t.length < 35 && !t.includes(' e ') && 
+      !t.includes('hora') && !t.includes('número') && !t.includes('nota')) return 'date'
   // CPF sozinho (sem nome junto)
   if (t.includes('cpf') && !t.includes('nome') && !t.includes('condutor') && !t.includes('motorista')) return 'cpf'
   // CNPJ sozinho (sem razão social junto)
-  if (t.includes('cnpj') && !t.includes('razão') && !t.includes('razao') && !t.includes('empresa') && !t.includes('transportadora') && !t.includes('destinatária') && !t.includes('destinatario') && !t.includes('remetente')) return 'cnpj'
-  if (t.includes('inscrição estadual') || t.includes('ie/') || (t.includes('ie ') && !t.includes('serie'))) return 'ie'
+  // CNPJ sozinho (sem combinação com outros campos)
+  if (t.includes('cnpj') && !t.includes(' e ') && !t.includes('inscrição') && !t.includes('ie') &&
+      !t.includes('razão') && !t.includes('razao') && !t.includes('empresa') && 
+      !t.includes('transportadora') && !t.includes('destinatária') && 
+      !t.includes('destinatario') && !t.includes('remetente') && !t.includes('endereço')) return 'cnpj'
+  // IE sozinha (sem combinação com outros campos)
+  if ((t.includes('inscrição estadual') || t.includes('ie/')) && !t.includes(' e ') && !t.includes('cnpj')) return 'ie'
   if (t.includes('valor') || t.includes('r$') || t.includes('preço') || t.includes('base de cálculo')) return 'valor'
   if (t.includes('placa')) return 'placa'
   if (t.includes('cep')) return 'cep'
@@ -191,7 +199,7 @@ export default function Home() {
     inputRef.current?.focus()
   }
 
-  const copiarTexto = (texto) => {
+  const copiarTexto = (texto, btnEl) => {
     // Extrair apenas a matéria tributária entre os marcadores
     let textoCopiar = texto
     const inicio = texto.indexOf('===MATERIA_INICIO===')
@@ -200,8 +208,22 @@ export default function Home() {
       textoCopiar = texto.substring(inicio + 20, fim).trim()
     }
 
+    const feedback = (btn) => {
+      if (btn) {
+        const original = btn.textContent
+        btn.textContent = '✓ Copiado!'
+        btn.style.borderColor = '#3fb950'
+        btn.style.color = '#3fb950'
+        setTimeout(() => {
+          btn.textContent = original
+          btn.style.borderColor = ''
+          btn.style.color = ''
+        }, 2000)
+      }
+    }
+
     navigator.clipboard.writeText(textoCopiar)
-      .then(() => alert('Matéria tributária copiada!'))
+      .then(() => feedback(btnEl))
       .catch(() => {
         const el = document.createElement('textarea')
         el.value = textoCopiar
@@ -209,7 +231,7 @@ export default function Home() {
         el.select()
         document.execCommand('copy')
         document.body.removeChild(el)
-        alert('Matéria tributária copiada!')
+        feedback(btnEl)
       })
   }
 const renderCampo = (perg, msgIdx, pi) => {
@@ -317,8 +339,8 @@ const renderCampo = (perg, msgIdx, pi) => {
                   ) : (
                     <>
                       <div dangerouslySetInnerHTML={{ __html: formatarTexto(msg.texto) }} />
-                      <button onClick={() => copiarTexto(msg.texto)} className={styles.btnCopiar}>
-                        📋 Copiar texto
+                      <button onClick={(e) => copiarTexto(msg.texto, e.currentTarget)} className={styles.btnCopiar}>
+                        📋 Copiar matéria
                       </button>
                     </>
                   )}
