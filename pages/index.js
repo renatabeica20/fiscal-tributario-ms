@@ -3,10 +3,11 @@ import styles from '../styles/Home.module.css'
 
 function detectarTipoCampo(texto) {
   const t = texto.toLowerCase()
+  if (t.includes('nome') || t.includes('razão social') || t.includes('razao social')) return 'texto'
   if (t.includes('data') || t.includes('quando')) return 'date'
-  if (t.includes('cpf')) return 'cpf'
-  if (t.includes('cnpj')) return 'cnpj'
-  if (t.includes('inscrição estadual') || t.includes('ie/') || t.includes('ie ') || t.includes('ie:')) return 'ie'
+  if (t.includes('cpf') && !t.includes('nome') && !t.includes('condutor') && !t.includes('motorista')) return 'cpf'
+  if (t.includes('cnpj') && !t.includes('razão') && !t.includes('razao') && !t.includes('empresa') && !t.includes('transportadora') && !t.includes('destinatária') && !t.includes('destinatario') && !t.includes('remetente')) return 'cnpj'
+  if (t.includes('inscrição estadual') || t.includes('ie/') || (t.includes('ie ') && !t.includes('serie'))) return 'ie'
   if (t.includes('valor') || t.includes('r$') || t.includes('preço') || t.includes('base de cálculo')) return 'valor'
   if (t.includes('placa')) return 'placa'
   if (t.includes('cep')) return 'cep'
@@ -24,8 +25,9 @@ function aplicarMascara(valor, tipo) {
     case 'ie':
       return n.substring(0, 12).replace(/(\d{2})(\d{3})(\d{3})(\d{1,})/, '$1.$2.$3-$4')
     case 'placa':
-      return valor.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7)
-        .replace(/([A-Z]{3})(\d{4})/, '$1-$2')
+      const p = valor.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7)
+      if (/^[A-Z]{3}\d[A-Z]\d{2}$/.test(p)) return p
+      return p.replace(/([A-Z]{3})(\d+)/, '$1-$2')
     case 'cep':
       return n.replace(/(\d{5})(\d{3})/, '$1-$2').substring(0, 9)
     case 'telefone':
@@ -226,7 +228,7 @@ export default function Home() {
             perg.tipo === 'cpf' ? '000.000.000-00' :
             perg.tipo === 'cnpj' ? '00.000.000/0000-00' :
             perg.tipo === 'ie' ? '00.000.000-0' :
-            perg.tipo === 'placa' ? 'ABC-1234' :
+            perg.tipo === 'placa' ? 'ABC-1234 ou ABC1D23' :
             perg.tipo === 'cep' ? '00000-000' :
             perg.tipo === 'telefone' ? '(67) 99999-9999' :
             perg.tipo === 'valor' ? 'R$ 0,00' : ''
@@ -240,9 +242,14 @@ export default function Home() {
       <textarea
         className={styles.campoInput}
         value={valor}
-        onChange={e => atualizarResposta(msgIdx, pi, e.target.value, 'texto')}
+        onChange={e => {
+          atualizarResposta(msgIdx, pi, e.target.value, 'texto')
+          e.target.style.height = 'auto'
+          e.target.style.height = e.target.scrollHeight + 'px'
+        }}
         placeholder="Digite sua resposta..."
         rows={2}
+        style={{ overflow: 'hidden', resize: 'none' }}
       />
     )
   }
@@ -265,20 +272,6 @@ export default function Home() {
             <h2>Fiscal Tributário Estadual — MS</h2>
             <p>Especialista em legislação tributária estadual do MS.<br />
             Analisa casos de fiscalização volante, enquadra infrações e redige documentos fiscais.</p>
-            <div className={styles.caps}>
-              {[
-                { icon: '⚖️', titulo: 'Enquadramento jurídico', desc: 'Lei 1.810/97 + RICMS/MS' },
-                { icon: '📄', titulo: 'Redação de documentos', desc: 'TVF, TA e ALIM' },
-                { icon: '🔢', titulo: 'Cálculo do crédito', desc: 'ICMS + multas' },
-                { icon: '💬', titulo: 'Consultas livres', desc: 'Tire dúvidas sobre a legislação' },
-              ].map((c, i) => (
-                <div key={i} className={styles.cap}>
-                  <div className={styles.capIcon}>{c.icon}</div>
-                  <div className={styles.capTitulo}>{c.titulo}</div>
-                  <div className={styles.capDesc}>{c.desc}</div>
-                </div>
-              ))}
-            </div>
             <div className={styles.sugestoes}>
               {sugestoes.map((s, i) => (
                 <button key={i} className={styles.sugestao} onClick={() => usarSugestao(s)}>{s}</button>
