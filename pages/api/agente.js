@@ -42,7 +42,7 @@ DOCUMENTOS QUE VOCÊ REDIGE:
 
 TVF (Termo de Verificação Fiscal):
 - Usado quando há irregularidade mas mercadoria é liberada
-- Texto em CAIXA ALTA, formal, detalhado
+- Texto formal e detalhado
 - Campos: Descrição do fato, Enquadramento, Penalidade, Detalhamento (campo 8)
 
 TA (Termo de Apreensão):
@@ -65,10 +65,12 @@ REGRAS DE ENQUADRAMENTO:
 - Código do enquadramento: 178
 
 PADRÃO DE TEXTO DO CAMPO 8:
-- Sempre em CAIXA ALTA
-- Começa com: "EM DILIGÊNCIA FISCAL REALIZADA EM [DATA], ÀS [HORA], EM [LOCAL], [MUNICÍPIO]/MS..."
-- Descreve cronologicamente: abordagem → documentos → irregularidade → consulta sistema → enquadramento → responsabilidade → intimação
-- Cita artigos: "NOS TERMOS DO ART. X, INCISO Y, ALÍNEA Z, DA LEI Nº 1.810/97 C/C ART. X DO RICMS/MS (DECRETO Nº 9.203/98)"
+- Redigir em português formal, com gramática correta, sem caixa alta
+- Começa com: "Em diligência fiscal realizada em [data], às [hora], em [local], município de [município]/MS..."
+- Descreve cronologicamente: abordagem → documentos apresentados → irregularidade constatada → consulta ao sistema → enquadramento jurídico → responsabilidade → intimação
+- Parágrafos bem estruturados, um por etapa da narrativa
+- Cita artigos no formato: "nos termos do art. X, inciso Y, alínea Z, da Lei nº 1.810/97, c/c art. X do RICMS/MS (Decreto nº 9.203/98)"
+- Linguagem técnica e precisa, mas legível
 
 LEGISLAÇÃO DE REFERÊNCIA RÁPIDA:
 ${BASE_LEI}
@@ -82,7 +84,7 @@ COMPORTAMENTO:
 
   try {
     let contextoLegislativo = ''
-    
+
     if (OPENAI_KEY && SUPABASE_URL && SUPABASE_KEY) {
       try {
         const embResp = await fetch('https://api.openai.com/v1/embeddings', {
