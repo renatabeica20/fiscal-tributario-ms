@@ -101,7 +101,6 @@ export default function Home() {
   const [carregando, setCarregando] = useState(false)
   const [historico, setHistorico] = useState([])
   const [respostasAtivas, setRespostasAtivas] = useState({})
-  const [inputExpandido, setInputExpandido] = useState(false)
   const chatRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -380,28 +379,20 @@ const renderCampo = (perg, msgIdx, pi) => {
 
       <div className={styles.inputArea}>
         <div className={styles.inputWrapper}>
-          <div className={styles.textareaContainer}>
-            <textarea
-              ref={inputRef}
-              className={styles.textarea}
-              style={{ height: inputExpandido ? '240px' : undefined }}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={tecla}
-              placeholder="Descreva o caso ou faça uma pergunta sobre a legislação tributária do MS..."
-              rows={inputExpandido ? 10 : 1}
-            />
-            <button
-              className={styles.btnExpandir}
-              onClick={() => {
-                setInputExpandido(e => !e)
-                setTimeout(() => inputRef.current?.focus(), 50)
-              }}
-              title={inputExpandido ? 'Recolher' : 'Expandir'}
-            >
-              {inputExpandido ? '▼' : '▲'}
-            </button>
-          </div>
+          <textarea
+            ref={inputRef}
+            className={styles.textarea}
+            value={input}
+            onChange={e => {
+              setInput(e.target.value)
+              // Auto-expand: cresce conforme o conteúdo, sem limite
+              e.target.style.height = 'auto'
+              e.target.style.height = e.target.scrollHeight + 'px'
+            }}
+            onKeyDown={tecla}
+            placeholder="Descreva o caso ou faça uma pergunta sobre a legislação tributária do MS..."
+            rows={1}
+          />
           <button className={styles.btnEnviar} onClick={() => enviar()} disabled={carregando || !input.trim()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -409,7 +400,7 @@ const renderCampo = (perg, msgIdx, pi) => {
             </svg>
           </button>
         </div>
-        <p className={styles.hint}>Enter para enviar · Shift+Enter para nova linha · ▲ para expandir</p>
+        <p className={styles.hint}>Enter para enviar · Shift+Enter para nova linha</p>
       </div>
     </div>
   )
