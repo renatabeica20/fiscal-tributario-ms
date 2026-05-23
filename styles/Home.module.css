@@ -402,3 +402,47 @@
 @media (max-width: 600px) {
   .msgUser .bubble { max-width: 90%; }
 }
+
+/* CONTROLES DE TAMANHO DE FONTE */
+.fontControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 3px 8px;
+}
+
+.btnFont {
+  background: transparent;
+  border: none;
+  color: #a8c8e8;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.btnFont:hover:not(:disabled) {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+}
+
+.btnFont:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.fontLabel {
+  color: #8ab4d8;
+  font-family: monospace;
+  font-size: 0.68rem;
+  min-width: 28px;
+  text-align: center;
+}
