@@ -1,48 +1,54 @@
 /* ============================================================
-   ORÁCULO FISCAL MS — Tema institucional SEFAZ-MS
-   Inspirado no e-Fron: azul institucional + fundo claro
+   ORÁCULO FISCAL MS — Premium Institutional Dark Theme
+   Bloomberg Terminal × Premium Legal Research
+   Palette: #0a0e1a · #111827 · #1e293b · #c8a951 · #1e56a0
    ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f0f4f8;
-  color: #1a2332;
+  background: #0a0e1a;
+  color: #f1f5f9;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 .header {
-  background: linear-gradient(135deg, #0d2f5e 0%, #1a4a8a 60%, #1e56a0 100%);
-  border-bottom: 4px solid #e8a000;
+  background: linear-gradient(180deg, #0d1320 0%, #0a0e1a 100%);
+  border-bottom: 2px solid #c8a951;
   padding: 0;
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 .headerContent {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 28px;
+  gap: 14px;
+  padding: 14px 24px;
   flex: 1;
 }
 
 .logo {
-  width: 46px;
-  height: 46px;
-  background: #e8a000;
-  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  background: #c8a951;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
-  font-weight: bold;
-  color: #0d2f5e;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0a0e1a;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  font-family: 'Playfair Display', serif;
 }
 
 .headerTexto {
@@ -52,109 +58,134 @@
 }
 
 .titulo {
-  font-size: 1.05rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.03em;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
   line-height: 1.2;
 }
 
 .subtitulo {
-  font-size: 0.72rem;
-  color: #8ab4d8;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  letter-spacing: 0.01em;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .headerBadge {
   margin-left: auto;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
-  padding: 4px 14px;
-  font-size: 0.7rem;
-  color: #a8c8e8;
-  font-family: monospace;
-  letter-spacing: 0.05em;
+  background: rgba(200, 169, 81, 0.06);
+  border: 1px solid rgba(200, 169, 81, 0.4);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.68rem;
+  color: #c8a951;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
   white-space: nowrap;
+  font-weight: 500;
 }
 
-/* CHAT */
+/* ===== CHAT ===== */
 .chat {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 0;
+  padding: 24px 0;
   scroll-behavior: smooth;
+  background: #0a0e1a;
 }
 
 .chat::-webkit-scrollbar { width: 6px; }
-.chat::-webkit-scrollbar-track { background: #e8edf2; }
-.chat::-webkit-scrollbar-thumb { background: #b0bec5; border-radius: 3px; }
+.chat::-webkit-scrollbar-track { background: #0a0e1a; }
+.chat::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+.chat::-webkit-scrollbar-thumb:hover { background: #334155; }
 
-/* WELCOME */
+/* ===== WELCOME ===== */
 .welcome {
   max-width: 760px;
-  margin: 40px auto;
+  margin: 60px auto;
   padding: 0 20px;
   text-align: center;
 }
 
-.welcome h2 {
-  font-size: 1.3rem;
-  color: #1a4a8a;
+.welcome::before {
+  content: '§';
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 5rem;
+  color: #c8a951;
   font-weight: 700;
-  margin-bottom: 8px;
+  line-height: 1;
+  margin-bottom: 20px;
+  opacity: 0.95;
+}
+
+.welcome h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: #f1f5f9;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
 }
 
 .welcome p {
-  font-size: 0.88rem;
-  color: #546e7a;
+  font-size: 0.9rem;
+  color: #94a3b8;
   line-height: 1.7;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
-/* MENSAGENS */
+/* ===== MENSAGENS ===== */
 .msg {
   max-width: 820px;
-  margin: 0 auto 16px;
+  margin: 0 auto 18px;
   padding: 0 20px;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.22s ease;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* MENSAGEM DO FISCAL */
+/* ----- Fiscal (user) ----- */
 .msgUser {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
   gap: 8px;
+  flex-direction: column;
 }
 
 .msgUser .bubble {
-  background: #1a4a8a;
+  background: #1e3a5f;
   color: #ffffff;
   border-radius: 16px 16px 2px 16px;
   padding: 12px 16px;
   max-width: 72%;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   line-height: 1.6;
-  box-shadow: 0 2px 6px rgba(26,74,138,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   position: relative;
+  align-self: flex-end;
 }
 
 .msgUserLabel {
   font-size: 0.68rem;
-  color: #78909c;
-  font-family: monospace;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
   text-align: right;
   margin-bottom: 4px;
   padding-right: 4px;
+  letter-spacing: 0.05em;
+  align-self: flex-end;
 }
 
-/* MENSAGEM DO ORÁCULO */
+/* ----- Oráculo (agent) ----- */
 .msgAgent {
   display: flex;
   gap: 12px;
@@ -164,61 +195,91 @@
 .avatar {
   width: 36px;
   height: 36px;
-  background: #1a4a8a;
-  border-radius: 8px;
+  background: #c8a951;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  font-weight: bold;
-  color: #ffffff;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0a0e1a;
   flex-shrink: 0;
   margin-top: 2px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 .msgAgentInner {
   flex: 1;
+  min-width: 0;
 }
 
 .msgAgentLabel {
   font-size: 0.68rem;
-  color: #1a4a8a;
-  font-family: monospace;
+  color: #c8a951;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .msgAgent .bubble {
-  background: #ffffff;
-  border: 1px solid #dde3ea;
-  border-left: 4px solid #1a4a8a;
+  background: #111827;
+  border: 1px solid #1e293b;
+  border-left: 3px solid #c8a951;
   border-radius: 2px 12px 12px 12px;
   padding: 16px 18px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   line-height: 1.75;
-  color: #1a2332;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  color: #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.msgAgent .bubble strong { color: #c8a951; font-weight: 600; }
+.msgAgent .bubble a { color: #c8a951; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Matéria tributária block (rendered inside agent bubble via blockquote/inset) */
+.msgAgent .bubble blockquote,
+.msgAgent .bubble pre {
+  background: #0d1117;
+  border-left: 3px solid #c8a951;
+  border-radius: 4px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  overflow-x: auto;
+}
+
+.msgAgent .bubble pre,
+.msgAgent .bubble code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
 }
 
 .bubbleErro {
-  border-color: #e53935 !important;
-  border-left-color: #e53935 !important;
-  color: #c62828;
+  border-color: #7f1d1d !important;
+  border-left-color: #ef4444 !important;
+  background: #1a0e0e !important;
+  color: #fca5a5 !important;
 }
 
 .contextoBar {
   font-size: 0.68rem;
-  color: #78909c;
-  font-family: monospace;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eef1f4;
+  color: #c8a951;
+  opacity: 0.75;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #1e293b;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* TYPING */
+/* ===== TYPING ===== */
 .typing {
   display: flex;
   gap: 5px;
@@ -230,7 +291,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #1a4a8a;
+  background: #c8a951;
   animation: bounce 1.2s infinite;
   opacity: 0.5;
 }
@@ -239,11 +300,11 @@
 .typing span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40% { transform: translateY(-6px); opacity: 1; }
+  0%, 80%, 100% { transform: translateY(0);    opacity: 0.4; }
+  40%           { transform: translateY(-6px); opacity: 1; }
 }
 
-/* FORMULÁRIO DE PERGUNTAS */
+/* ===== FORMULÁRIO ===== */
 .formulario {
   display: flex;
   flex-direction: column;
@@ -252,7 +313,7 @@
 
 .formularioIntro {
   font-size: 0.88rem;
-  color: #546e7a;
+  color: #94a3b8;
   margin-bottom: 4px;
   font-style: italic;
 }
@@ -260,83 +321,87 @@
 .campo {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .campoLabel {
-  font-size: 0.85rem;
-  color: #1a2332;
+  font-size: 0.82rem;
+  color: #f1f5f9;
   line-height: 1.5;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .campoInput {
-  background: #f8fafc;
-  border: 1px solid #cfd8dc;
+  background: #0d1117;
+  border: 1px solid #1e293b;
   border-radius: 6px;
-  padding: 8px 12px;
-  color: #1a2332;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 0.88rem;
+  padding: 9px 12px;
+  color: #f1f5f9;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.9rem;
   resize: vertical;
   outline: none;
   min-height: 38px;
   line-height: 1.5;
-  transition: border-color 0.2s;
+  transition: border-color 0.18s, box-shadow 0.18s;
 }
 
 .campoInput:focus {
-  border-color: #1a4a8a;
-  box-shadow: 0 0 0 3px rgba(26,74,138,0.1);
+  border-color: #c8a951;
+  box-shadow: 0 0 0 3px rgba(200, 169, 81, 0.15);
 }
 
-.campoInput::placeholder { color: #b0bec5; }
+.campoInput::placeholder { color: #475569; }
 
 .btnEnviarRespostas {
-  background: #1a4a8a;
-  color: #ffffff;
+  background: #c8a951;
+  color: #0a0e1a;
   border: none;
   border-radius: 6px;
-  padding: 10px 20px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  padding: 10px 22px;
+  font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.18s, transform 0.12s;
   margin-top: 6px;
   align-self: flex-start;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
-.btnEnviarRespostas:hover:not(:disabled) { background: #1565c0; }
-.btnEnviarRespostas:disabled { opacity: 0.4; cursor: not-allowed; }
+.btnEnviarRespostas:hover:not(:disabled) { background: #d6b766; }
+.btnEnviarRespostas:active:not(:disabled) { transform: translateY(1px); }
+.btnEnviarRespostas:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .btnCopiar {
   margin-top: 12px;
   background: transparent;
-  border: 1px solid #cfd8dc;
+  border: 1px solid #1e293b;
   border-radius: 4px;
-  color: #546e7a;
+  color: #94a3b8;
   padding: 5px 14px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   cursor: pointer;
-  font-family: monospace;
-  transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.18s;
   display: inline-block;
+  letter-spacing: 0.04em;
 }
 
 .btnCopiar:hover {
-  border-color: #1a4a8a;
-  color: #1a4a8a;
-  background: #eef4fb;
+  border-color: #c8a951;
+  color: #c8a951;
+  background: rgba(200, 169, 81, 0.05);
 }
 
-/* INPUT */
+/* ===== INPUT AREA ===== */
 .inputArea {
-  background: #ffffff;
-  border-top: 2px solid #dde3ea;
-  padding: 14px 20px;
+  background: #0d1117;
+  border-top: 1px solid #1e293b;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
 }
 
 .inputWrapper {
@@ -349,32 +414,32 @@
 
 .textarea {
   flex: 1;
-  background: #f8fafc;
-  border: 1px solid #cfd8dc;
+  background: #111827;
+  border: 1px solid #1e293b;
   border-radius: 8px;
-  padding: 10px 14px;
-  color: #1a2332;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 0.9rem;
+  padding: 11px 14px;
+  color: #f1f5f9;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.92rem;
   resize: none;
   outline: none;
   min-height: 44px;
   line-height: 1.5;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
   overflow: hidden;
 }
 
 .textarea:focus {
-  border-color: #1a4a8a;
-  box-shadow: 0 0 0 3px rgba(26,74,138,0.1);
-  background: #ffffff;
+  border-color: #c8a951;
+  box-shadow: 0 0 0 3px rgba(200, 169, 81, 0.15);
+  background: #0d1117;
 }
 
-.textarea::placeholder { color: #90a4ae; }
+.textarea::placeholder { color: #475569; }
 
 .btnEnviar {
-  background: #1a4a8a;
-  color: #ffffff;
+  background: #c8a951;
+  color: #0a0e1a;
   border: none;
   border-radius: 8px;
   width: 44px;
@@ -384,65 +449,71 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s;
-  box-shadow: 0 2px 6px rgba(26,74,138,0.3);
+  transition: background 0.18s, transform 0.12s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
-.btnEnviar:hover:not(:disabled) { background: #1565c0; }
-.btnEnviar:disabled { opacity: 0.35; cursor: not-allowed; }
+.btnEnviar:hover:not(:disabled) { background: #d6b766; }
+.btnEnviar:active:not(:disabled) { transform: translateY(1px); }
+.btnEnviar:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .hint {
   max-width: 820px;
-  margin: 6px auto 0;
-  font-size: 0.68rem;
-  color: #90a4ae;
-  font-family: monospace;
+  margin: 8px auto 0;
+  font-size: 0.66rem;
+  color: #475569;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 600px) {
   .msgUser .bubble { max-width: 90%; }
+  .headerContent { padding: 12px 16px; gap: 10px; }
+  .titulo { font-size: 1rem; }
+  .headerBadge { display: none; }
 }
 
-/* CONTROLES DE TAMANHO DE FONTE */
+/* ===== FONT CONTROLS (ghost) ===== */
 .fontControls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin-left: 12px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 20px;
-  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid #1e293b;
+  border-radius: 999px;
+  padding: 2px 6px;
 }
 
 .btnFont {
   background: transparent;
   border: none;
-  color: #a8c8e8;
+  color: #94a3b8;
   cursor: pointer;
-  font-family: monospace;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 999px;
   transition: background 0.15s, color 0.15s;
   line-height: 1;
 }
 
 .btnFont:hover:not(:disabled) {
-  background: rgba(255,255,255,0.15);
-  color: #ffffff;
+  background: rgba(200, 169, 81, 0.08);
+  color: #c8a951;
 }
 
 .btnFont:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
 }
 
 .fontLabel {
-  color: #8ab4d8;
-  font-family: monospace;
-  font-size: 0.68rem;
-  min-width: 28px;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.66rem;
+  min-width: 26px;
   text-align: center;
+  letter-spacing: 0.04em;
 }
