@@ -4,21 +4,16 @@ import styles from '../styles/Home.module.css'
 // Detecta tipo de campo pela pergunta
 function detectarTipoCampo(texto) {
   const t = texto.toLowerCase()
-  // Campos que contêm nome/razão social são sempre texto livre
   if (t.includes('nome') || t.includes('razão social') || t.includes('razao social')) return 'texto'
   if ((t === 'data da abordagem' || t === 'data da fiscalização' || 
        t === 'data' || t === 'quando ocorreu') ) return 'date'
   if (t.includes('data') && t.length < 35 && !t.includes(' e ') && 
       !t.includes('hora') && !t.includes('número') && !t.includes('nota')) return 'date'
-  // CPF sozinho (sem nome junto)
   if (t.includes('cpf') && !t.includes('nome') && !t.includes('condutor') && !t.includes('motorista')) return 'cpf'
-  // CNPJ sozinho (sem razão social junto)
-  // CNPJ sozinho (sem combinação com outros campos)
   if (t.includes('cnpj') && !t.includes(' e ') && !t.includes('inscrição') && !t.includes('ie') &&
       !t.includes('razão') && !t.includes('razao') && !t.includes('empresa') && 
       !t.includes('transportadora') && !t.includes('destinatária') && 
       !t.includes('destinatario') && !t.includes('remetente') && !t.includes('endereço')) return 'cnpj'
-  // IE sozinha (sem combinação com outros campos)
   if ((t.includes('inscrição estadual') || t.includes('ie/')) && !t.includes(' e ') && !t.includes('cnpj')) return 'ie'
   if (t.includes('valor') || t.includes('r$') || t.includes('preço') || t.includes('base de cálculo')) return 'valor'
   if (t.includes('placa')) return 'placa'
@@ -39,9 +34,8 @@ function aplicarMascara(valor, tipo) {
       return n.substring(0, 12).replace(/(\d{2})(\d{3})(\d{3})(\d{1,})/, '$1.$2.$3-$4')
     case 'placa':
       const p = valor.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7)
-      // Mercosul: ABC1D23 — Antigo: ABC1234
-      if (/^[A-Z]{3}\d[A-Z]\d{2}$/.test(p)) return p.substring(0,3) + p.substring(3) // Mercosul sem hífen
-      return p.replace(/([A-Z]{3})(\d+)/, '$1-$2') // Antigo com hífen
+      if (/^[A-Z]{3}\d[A-Z]\d{2}$/.test(p)) return p.substring(0,3) + p.substring(3)
+      return p.replace(/([A-Z]{3})(\d+)/, '$1-$2')
     case 'cep':
       return n.replace(/(\d{5})(\d{3})/, '$1-$2').substring(0, 9)
     case 'telefone':
@@ -59,7 +53,6 @@ function aplicarMascara(valor, tipo) {
 function detectarPerguntas(texto) {
   const linhas = texto.split('\n')
   const perguntas = []
-  // Captura perguntas com ou sem negrito: "1. texto" ou "1. **texto**"
   const regex = /^(\d+)\.\s+\*{0,2}(.+?)\*{0,2}$/
 
   for (const linha of linhas) {
@@ -78,7 +71,6 @@ function detectarPerguntas(texto) {
 }
 
 function temPerguntas(texto) {
-  // Só abre formulário quando o agente usar o gatilho explícito
   const gatilhos = [
     'DADOS NECESSÁRIOS PARA O DOCUMENTO:',
     'DADOS NECESSÁRIOS:',
@@ -101,13 +93,17 @@ export default function Home() {
   const [carregando, setCarregando] = useState(false)
   const [historico, setHistorico] = useState([])
   const [respostasAtivas, setRespostasAtivas] = useState({})
+  const [fontSize, setFontSize] = useState(14)
   const chatRef = useRef(null)
   const inputRef = useRef(null)
+
+  const FONT_MIN = 11
+  const FONT_MAX = 20
 
   useEffect(() => {
     if (!chatRef.current) return
 
-    // Quando o agente terminar de responder, rola o CHAT até o início da resposta
+    // Quando o agente terminar de responder, rola até o INÍCIO da resposta
     if (!carregando && mensagens.length > 0) {
       const ultima = mensagens[mensagens.length - 1]
       if (ultima.tipo === 'agent') {
@@ -115,13 +111,11 @@ export default function Home() {
           const msgs = chatRef.current.querySelectorAll('[data-tipo="agent"]')
           if (msgs.length > 0) {
             const ultimaMsg = msgs[msgs.length - 1]
-            // Calcula posição da mensagem relativa ao container do chat
-            const chatTop = chatRef.current.getBoundingClientRect().top
-            const msgTop = ultimaMsg.getBoundingClientRect().top
-            const offset = msgTop - chatTop + chatRef.current.scrollTop - 16
+            // offsetTop é relativo ao chatRef (position: relative implícito por overflow)
+            const offset = ultimaMsg.offsetTop - 16
             chatRef.current.scrollTo({ top: offset, behavior: 'smooth' })
           }
-        }, 100)
+        }, 120)
         return
       }
     }
@@ -214,13 +208,7 @@ export default function Home() {
     }
   }
 
-  const usarSugestao = (texto) => {
-    setInput(texto)
-    inputRef.current?.focus()
-  }
-
   const copiarTexto = (texto, btnEl) => {
-    // Extrair apenas a matéria tributária entre os marcadores
     let textoCopiar = texto
     const inicio = texto.indexOf('===MATERIA_INICIO===')
     const fim = texto.indexOf('===MATERIA_FIM===')
@@ -254,7 +242,8 @@ export default function Home() {
         feedback(btnEl)
       })
   }
-const renderCampo = (perg, msgIdx, pi) => {
+
+  const renderCampo = (perg, msgIdx, pi) => {
     const valor = perg.resposta || ''
 
     if (perg.tipo === 'date') {
@@ -315,6 +304,22 @@ const renderCampo = (perg, msgIdx, pi) => {
             <p className={styles.subtitulo}>Consultoria Jurídico-Tributária e Apoio à Fiscalização Volante — SEFAZ-MS</p>
           </div>
           <div className={styles.headerBadge}>Lei 1.810/97 · RICMS/MS</div>
+          {/* Controles de tamanho de fonte */}
+          <div className={styles.fontControls}>
+            <button
+              className={styles.btnFont}
+              onClick={() => setFontSize(f => Math.max(FONT_MIN, f - 1))}
+              disabled={fontSize <= FONT_MIN}
+              title="Diminuir letra"
+            >A−</button>
+            <span className={styles.fontLabel}>{fontSize}px</span>
+            <button
+              className={styles.btnFont}
+              onClick={() => setFontSize(f => Math.min(FONT_MAX, f + 1))}
+              disabled={fontSize >= FONT_MAX}
+              title="Aumentar letra"
+            >A+</button>
+          </div>
         </div>
       </header>
 
@@ -324,7 +329,7 @@ const renderCampo = (perg, msgIdx, pi) => {
             <h2>Oráculo Fiscal MS</h2>
             <p>Consultoria jurídico-tributária especializada em legislação do MS.<br />
             Análise de casos, enquadramento legal e elaboração de documentos fiscais.</p>
-</div>
+          </div>
         )}
 
         {mensagens.map((msg, msgIdx) => (
@@ -334,7 +339,7 @@ const renderCampo = (perg, msgIdx, pi) => {
               <div>
                 <div className={styles.msgUserLabel}>👮 Fiscal</div>
                 <div className={styles.bubble}>
-                  <span style={{ whiteSpace: 'pre-wrap' }}>{msg.texto}</span>
+                  <span style={{ whiteSpace: 'pre-wrap', fontSize: `${fontSize}px` }}>{msg.texto}</span>
                 </div>
               </div>
             ) : (
@@ -342,7 +347,7 @@ const renderCampo = (perg, msgIdx, pi) => {
                 <div className={styles.avatar}>§</div>
                 <div className={styles.msgAgentInner}>
                   <div className={styles.msgAgentLabel}>⚖ Oráculo Fiscal MS</div>
-                  <div className={`${styles.bubble} ${msg.erro ? styles.bubbleErro : ''}`}>
+                  <div className={`${styles.bubble} ${msg.erro ? styles.bubbleErro : ''}`} style={{ fontSize: `${fontSize}px` }}>
                     {msg.trechos > 0 && (
                       <div className={styles.contextoBar}>📚 {msg.trechos} trechos da legislação consultados</div>
                     )}
@@ -425,23 +430,28 @@ const renderCampo = (perg, msgIdx, pi) => {
 }
 
 function formatarTexto(txt) {
-  // Ocultar marcadores da matéria tributária na exibição
+  // 1. Escapar HTML primeiro (texto puro)
   let html = txt
-    .replace(/===MATERIA_INICIO===/g, '<div class="materiaBox">')
-    .replace(/===MATERIA_FIM===/g, '</div>')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/&lt;div class="materiaBox"&gt;/g, '<div style="border-left:3px solid #1a4a8a;padding:12px 16px;margin:10px 0;background:#f0f4f8;border-radius:0 6px 6px 0">')
-    .replace(/&lt;\/div&gt;/g, '</div>')
+
+  // 2. Substituir marcadores da matéria tributária
+  html = html
+    .replace(/===MATERIA_INICIO===/g, '<div style="border-left:3px solid #1a4a8a;padding:12px 16px;margin:10px 0;background:#f0f4f8;border-radius:0 6px 6px 0">')
+    .replace(/===MATERIA_FIM===/g, '</div>')
+
+  // 3. Markdown
+  html = html
     .replace(/^## (.+)$/gm, '<h3 style="color:#1a4a8a;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace;font-weight:700">$1</h3>')
     .replace(/^# (.+)$/gm, '<h3 style="color:#1a4a8a;font-size:0.92rem;margin:16px 0 8px;font-weight:700">$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#1a4a8a">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
 
+  // 4. Parágrafos
   const paragrafos = html.split('\n\n')
   html = paragrafos.map(p => {
-    if (p.startsWith('<h3') || p.trim() === '') return p
+    if (p.startsWith('<h3') || p.startsWith('<div') || p.trim() === '') return p
     return '<p style="margin-bottom:8px">' + p.replace(/\n/g, '<br>') + '</p>'
   }).join('\n')
 
