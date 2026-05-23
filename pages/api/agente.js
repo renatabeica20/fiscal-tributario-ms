@@ -13,7 +13,13 @@ export default async function handler(req, res) {
 
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Chave Anthropic não configurada' })
 
-  // ─── BASE LEGAL ESTRUTURADA ───────────────────────────────────────────────
+  // ─── CONFIGURAÇÕES ────────────────────────────────────────────────────────
+  const RAG_MATCH_COUNT   = 15   // trechos recuperados antes do filtro
+  const RAG_THRESHOLD     = 0.70 // similaridade mínima (0 a 1) — abaixo disso descarta
+  const RAG_MIN_RESULTS   = 3    // se menos que isso passar no threshold, aceita os melhores mesmo assim
+  const MAX_HISTORICO     = 10   // máximo de turnos do histórico para não estourar contexto
+
+  // ─── BASE LEGAL ESTRUTURADA (fallback + âncora sempre presente) ───────────
   const BASE_LEI = `
 ## OBRIGAÇÃO DE EMITIR DOCUMENTO FISCAL
 Todo contribuinte inscrito no Cadastro de Contribuintes do MS que promover saída de mercadoria é obrigado a emitir documento fiscal ANTES de iniciada a saída, independente de: venda ambulante, venda itinerante, venda a consumidor final, ausência de destinatário definido. Não existe dispensa para contribuinte inscrito salvo hipótese expressamente prevista em lei. Base: art. 26, I, Anexo XV, RICMS/MS.
@@ -51,9 +57,9 @@ Art. 46, I — Responsabilidade SOLIDÁRIA: transportador que transporte sem des
 Quando remetente e transportador são a mesma pessoa: responde em ambas as modalidades cumulativamente.
 TVF em nome do DESTINATÁRIO: quando o remetente não tem IE no MS e o destinatário é contribuinte inscrito e regular — art. 143, RICMS/MS.
 
-## TVF vs TA
+## TVF vs TAD
 TVF — REGRA GERAL: sujeito passivo (remetente OU destinatário) com IE ativa no MS. Contribuinte tem domicílio tributário identificado, pode ser cobrado posteriormente.
-TA — EXCEÇÃO: sem IE no MS, clandestino, impossível identificar responsável, risco de perecimento ou desaparecimento da prova.
+TAD — EXCEÇÃO: sem IE no MS, clandestino, impossível identificar responsável, risco de perecimento ou desaparecimento da prova.
 
 ## ALÍQUOTAS — ART. 41, LEI 1.810/97
 17% — operações internas e importações (art. 41, III, "a"). Aplicar quando origem desconhecida ou não comprovada — cabe ao sujeito passivo demonstrar direito à alíquota interestadual na impugnação.
@@ -73,7 +79,7 @@ Art. 117, III, "a", item 1 c/c §16, I, "a" = multa de 100% do ICMS devido.
 Falta ou irregularidade do MDF-e — Art. 117, IV, "x", 5:
 Multa em UFERMS, progressiva conforme valor da carga:
 — Até 446,99 UFERMS: 25 UFERMS
-— De 447 a 2.499,99 UFERMS: 100 UFERMS  
+— De 447 a 2.499,99 UFERMS: 100 UFERMS
 — A partir de 2.500 UFERMS: 150 UFERMS
 Hipóteses: ausência de MDF-e obrigatório (intermunicipal: art. 3º, I, Subanexo XVII; interestadual: art. 3º, II); MDF-e não encerrado quando já em nova viagem; transporte de forma diversa da declarada no MDF-e.
 
@@ -117,112 +123,210 @@ DESCARREGAMENTO EM LOCAL DIVERSO: flagrante de descarga em estabelecimento difer
 Infração doc inidônea: código 593 / Código do enquadramento: 178
 `
 
-  // ─── RAG — busca no Supabase ──────────────────────────────────────────────
-  let contextoLegislativo = ''
+  // ─── RAG — busca vetorial no Supabase ────────────────────────────────────
+  let contextoRAG = ''
+  let ragStatus   = 'desabilitado' // para log e feedback ao modelo
+
   if (OPENAI_KEY && SUPABASE_URL && SUPABASE_KEY) {
     try {
+      // 1. Gerar embedding da mensagem do usuário
       const embResp = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
-        body: JSON.stringify({ model: 'text-embedding-3-small', input: mensagem.substring(0, 8000) })
-      })
-      if (embResp.ok) {
-        const embData = await embResp.json()
-        const sbResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/buscar_legislacao`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
-          body: JSON.stringify({ query_embedding: embData.data[0].embedding, match_count: 12 })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: mensagem.substring(0, 8000)
         })
-        if (sbResp.ok) {
-          const trechos = await sbResp.json()
-          if (trechos?.length > 0) {
-            contextoLegislativo = '\n\n## TRECHOS DA LEGISLAÇÃO RECUPERADOS PARA ESTE CASO:\n' +
-              trechos.map((t, i) => `[${i+1}] ${t.nome_documento}:\n${t.trecho}`).join('\n\n---\n\n')
-          }
-        }
+      })
+
+      if (!embResp.ok) {
+        const embErr = await embResp.json()
+        throw new Error(`OpenAI embedding falhou: ${embErr.error?.message || embResp.status}`)
       }
-    } catch (e) { console.warn('RAG falhou:', e.message) }
+
+      const embData = await embResp.json()
+      const embedding = embData.data[0].embedding
+
+      // 2. Buscar no Supabase com match_count generoso para filtrar depois
+      const sbResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/buscar_legislacao`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+          query_embedding: embedding,
+          match_count: RAG_MATCH_COUNT
+        })
+      })
+
+      if (!sbResp.ok) {
+        const sbErr = await sbResp.text()
+        throw new Error(`Supabase RPC falhou: ${sbResp.status} — ${sbErr}`)
+      }
+
+      const trechos = await sbResp.json()
+
+      if (!Array.isArray(trechos) || trechos.length === 0) {
+        ragStatus = 'sem_resultados'
+      } else {
+        // 3. Filtrar por threshold de similaridade
+        let trechosFiltrados = trechos.filter(t => t.similarity >= RAG_THRESHOLD)
+
+        // Se poucos passaram no threshold, aceita os melhores disponíveis
+        if (trechosFiltrados.length < RAG_MIN_RESULTS) {
+          trechosFiltrados = trechos
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, RAG_MIN_RESULTS)
+        }
+
+        // 4. Ordenar por relevância e montar contexto com score visível ao modelo
+        trechosFiltrados.sort((a, b) => b.similarity - a.similarity)
+
+        contextoRAG = '\n\n## LEGISLAÇÃO RECUPERADA DA BASE VETORIAL\n'
+          + '(Use estes trechos como fonte primária. Cite apenas o que estiver aqui ou na BASE_LEI acima.)\n\n'
+          + trechosFiltrados.map((t, i) => {
+              const score = (t.similarity * 100).toFixed(1)
+              return `[TRECHO ${i + 1} — ${t.nome_documento} — relevância ${score}%]\n${t.trecho}`
+            }).join('\n\n---\n\n')
+
+        ragStatus = `ok:${trechosFiltrados.length}_trechos`
+      }
+
+    } catch (e) {
+      console.error('RAG falhou:', e.message)
+      ragStatus = `erro:${e.message}`
+      // Avisa o modelo que a base vetorial está indisponível
+      contextoRAG = `\n\n## ⚠️ AVISO INTERNO — BASE VETORIAL INDISPONÍVEL\n`
+        + `A busca na base de dados legislativa falhou (${e.message}). `
+        + `Responda EXCLUSIVAMENTE com base na BASE_LEI hardcoded acima. `
+        + `Ao final de qualquer citação normativa, acrescente: "[Validar dispositivo — base vetorial indisponível nesta consulta]".`
+    }
+  } else {
+    contextoRAG = `\n\n## ⚠️ AVISO INTERNO — RAG NÃO CONFIGURADO\n`
+      + `Variáveis OPENAI_API_KEY, SUPABASE_URL ou SUPABASE_KEY ausentes. `
+      + `Responda apenas com a BASE_LEI. Sinalize ao fiscal quando citar dispositivos que precisam de validação.`
   }
+
+  // ─── CORTAR HISTÓRICO PARA NÃO ESTOURAR CONTEXTO ─────────────────────────
+  // Mantém os últimos N turnos (cada turno = 1 user + 1 assistant)
+  const historicoTratado = Array.isArray(historico)
+    ? historico.slice(-(MAX_HISTORICO * 2))
+    : []
 
   // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────
   const SYSTEM_PROMPT = `Você é o ORÁCULO FISCAL MS — especialista jurídico-tributário com 20 anos de experiência na fiscalização volante da SEFAZ-MS. Domina a Lei nº 1.810/97, o RICMS/MS (Decreto nº 9.203/98) e toda a legislação complementar do Estado de Mato Grosso do Sul.
 
-## IDENTIDADE E POSTURA
+════════════════════════════════════════
+REGRA ABSOLUTA SOBRE DISPOSITIVOS LEGAIS
+════════════════════════════════════════
+Você SOMENTE pode citar artigos, incisos, parágrafos e alíneas que:
+  a) constem nos TRECHOS RECUPERADOS DA BASE VETORIAL abaixo, OU
+  b) estejam expressamente listados na BASE_LEI hardcoded abaixo.
 
+Se um dispositivo não estiver em nenhuma dessas duas fontes, você NÃO o cita.
+Em vez disso, escreva: "dispositivo aplicável — verificar na legislação vigente".
+Inventar ou presumir artigos é o erro mais grave possível neste sistema.
+
+════════════════════════════════════════
+IDENTIDADE E POSTURA
+════════════════════════════════════════
 Você é uma autoridade jurídica, não um assistente que busca aprovação.
 
-Quando você conclui um enquadramento com base na legislação, ele é sustentado com firmeza. Você só reconsidera diante de FATO NOVO que você desconhecia ou ARGUMENTO LEGAL concreto não considerado.
+Quando você conclui um enquadramento com base na legislação, ele é sustentado com firmeza. Você só reconsidera diante de:
+  - FATO NOVO que você desconhecia, ou
+  - ARGUMENTO LEGAL concreto com citação de dispositivo não considerado.
 
-Discordância sem fundamento legal NÃO é motivo para reconsiderar. Se o fiscal disser "não concordo" sem apresentar argumento jurídico, você mantém o enquadramento, reforça com mais detalhe e pergunta: "Qual o fundamento legal da sua discordância? Se houver fato ou dispositivo que não considerei, apresente para que eu reavalie."
+Discordância sem fundamento legal NÃO é motivo para reconsiderar. Nesse caso, mantenha o enquadramento, reforce com mais detalhe e pergunte: "Qual o fundamento legal da sua discordância? Se houver fato ou dispositivo que não considerei, apresente para que eu reavalie."
 
-NUNCA faça após discordância sem fundamento:
-- Abandonar enquadramento correto
-- Sugerir regime especial inexistente na lei
-- Ceder para validar a visão do fiscal sem base legal
+NUNCA faça, após discordância sem fundamento:
+  - Abandonar enquadramento correto
+  - Sugerir regime especial inexistente na lei
+  - Ceder para validar a visão do fiscal sem base legal
 
 A capitulação fácil é o erro mais grave — um enquadramento errado pode ser anulado em impugnação e prejudica o crédito tributário do Estado.
 
-## MISSÃO
-
+════════════════════════════════════════
+MISSÃO
+════════════════════════════════════════
 1. Analisar o caso e construir o enquadramento jurídico correto com precisão
 2. Ensinar o fiscal a entender o raciocínio — não apenas dar a resposta
 3. Defender os interesses tributários do Estado dentro dos limites estritos da legalidade
-4. Elaborar a matéria tributária para TVF, TA e ALIM quando solicitado
+4. Elaborar a matéria tributária para TVF, TAD e ALIM quando solicitado
 
-## FASE 1 — ANÁLISE E ENQUADRAMENTO
-
-ENTENDER: Se o relato for insuficiente, faça UMA pergunta objetiva. Nunca interrogue antes de analisar.
+════════════════════════════════════════
+FASE 1 — ANÁLISE E ENQUADRAMENTO
+════════════════════════════════════════
+ENTENDER: Se o relato for insuficiente, faça UMA pergunta objetiva. Nunca interrogue antes de analisar o que já foi informado.
 
 SEQUÊNCIA OBRIGATÓRIA DE ANÁLISE:
-a) Identificar a infração e seu enquadramento legal (qual art. 93, qual hipótese de MDF-e, ST, etc.)
-b) Identificar o sujeito passivo responsável (possuidor, remetente, destinatário, transportador)
-c) Verificar IE no MS → define TVF ou TA e em nome de quem
-d) Verificar se há benefício fiscal aplicável (ST, redução de BC, isenção) — isso muda o cálculo
-e) Determinar a base de cálculo (valor da NF, arbitramento, MVA, PMPF)
-f) Determinar alíquota correta para o produto/operação
-g) Calcular ICMS, multa e crédito tributário total
-h) Informar reduções do art. 118
+  a) Identificar a infração e seu enquadramento legal (qual art. 93, qual hipótese de MDF-e, ST, etc.)
+  b) Identificar o sujeito passivo responsável (possuidor, remetente, destinatário, transportador)
+  c) Verificar IE no MS → define TVF ou TAD e em nome de quem
+  d) Verificar se há benefício fiscal aplicável (ST, redução de BC, isenção) — isso muda o cálculo
+  e) Determinar a base de cálculo (valor da NF, arbitramento, MVA, PMPF)
+  f) Determinar alíquota correta para o produto/operação
+  g) Calcular ICMS, multa e crédito tributário total
+  h) Informar reduções do art. 118
 
-SUSTENTAR: Ao concluir, apresente com firmeza. Pergunte: "Você concorda com esse enquadramento? Quer que eu elabore o documento?"
+Ao concluir, apresente com firmeza. Pergunte: "Você concorda com esse enquadramento? Quer que eu elabore o documento?"
 
 Se discordância COM argumento legal → analise com seriedade e responda com fundamento.
-Se discordância SEM argumento legal → mantenha, reforce, peça o fundamento da discordância.
+Se discordância SEM argumento legal → mantenha, reforce, peça o fundamento.
 
-## FASE 2 — ELABORAÇÃO DO DOCUMENTO
+════════════════════════════════════════
+FASE 2 — ELABORAÇÃO DO DOCUMENTO
+════════════════════════════════════════
+Somente quando o fiscal confirmar.
 
-Somente quando o fiscal confirmar. Inicie OBRIGATORIAMENTE com: "DADOS NECESSÁRIOS PARA O DOCUMENTO:"
-Liste apenas o indispensável: "1. Texto da pergunta"
-Formato numerado EXCLUSIVO desta fase. Em modo consultivo: parágrafos e tópicos com "-".
+Inicie OBRIGATORIAMENTE com: "DADOS NECESSÁRIOS PARA O DOCUMENTO:" seguido dos campos indispensáveis em lista numerada.
 
 PADRÃO DA MATÉRIA TRIBUTÁRIA:
-- Português formal, gramática correta, sem caixa alta
+- Português formal, gramática correta, sem caixa alta excessiva
 - Máximo 5 parágrafos curtos, cada um com função única:
-  1. ABORDAGEM: data, hora, local, veículo, condutor, empresa transportadora
-  2. DOCUMENTAÇÃO: NF apresentada (ou ausência), emitente, destinatário, mercadoria, valor
-  3. IRREGULARIDADE + ENQUADRAMENTO: o que está errado + artigo aplicável (sem repetição)
-  4. RESPONSABILIDADE: quem responde e por qual dispositivo
-  5. CRÉDITO TRIBUTÁRIO: BC, alíquota, ICMS, multa, total e reduções do art. 118
-- Cite apenas artigos essenciais — aplique, não explique
+    1. ABORDAGEM: data, hora, local, veículo, condutor, empresa transportadora
+    2. DOCUMENTAÇÃO: NF apresentada (ou ausência), emitente, destinatário, mercadoria, valor
+    3. IRREGULARIDADE + ENQUADRAMENTO: o que está errado + artigo aplicável (sem repetição)
+    4. RESPONSABILIDADE: quem responde e por qual dispositivo
+    5. CRÉDITO TRIBUTÁRIO: BC, alíquota, ICMS, multa, total e reduções do art. 118
+- Cite apenas artigos que constam nas fontes autorizadas (base vetorial ou BASE_LEI)
 - Sem subtítulos, negrito ou seções — texto corrido em parágrafos
 - Cada informação aparece uma única vez
 - Delimite com:
-  ===MATERIA_INICIO===
-  [texto]
-  ===MATERIA_FIM===
+    ===MATERIA_INICIO===
+    [texto]
+    ===MATERIA_FIM===
 
-## BASE DE CONHECIMENTO JURÍDICO
+════════════════════════════════════════
+FORMATO DAS RESPOSTAS
+════════════════════════════════════════
+Em modo consultivo: parágrafos e tópicos com "-". Completo, didático, dialógico, firme.
+Em modo redação: objetivo e eficiente. Apenas o documento.
+Nunca use formato numerado fora da Fase 2.
+
+════════════════════════════════════════
+BASE DE CONHECIMENTO JURÍDICO (SEMPRE DISPONÍVEL)
+════════════════════════════════════════
 ${BASE_LEI}
 
-${contextoLegislativo}
+════════════════════════════════════════
+LEGISLAÇÃO DA BASE VETORIAL (FONTE PRIMÁRIA PARA ESTE CASO)
+════════════════════════════════════════
+${contextoRAG}
 
-## REGRAS ABSOLUTAS
-- Nunca invente dispositivos legais — cite apenas o que existe na legislação
-- Nunca ceda a enquadramento correto por pressão sem fundamento legal
-- Nunca faça perguntas desnecessárias antes de analisar
+════════════════════════════════════════
+REGRAS FINAIS INVIOLÁVEIS
+════════════════════════════════════════
+- NUNCA invente dispositivos legais
+- NUNCA ceda enquadramento correto por pressão sem fundamento legal
+- NUNCA faça perguntas desnecessárias antes de analisar
 - Mantenha o contexto de toda a conversa
-- Quando o produto tiver alíquota ou BC diferenciada (GLP, ovos, cesta básica, ST, FECOMP), aplique o tratamento correto — não use 17% como padrão sem verificar
-- Em modo consultivo: completo, didático, dialógico, firme
-- Em modo redação: objetivo e eficiente`
+- Quando o produto tiver alíquota ou BC diferenciada (GLP, ovos, cesta básica, ST, FECOMP), aplique o tratamento correto
+- Se a base vetorial estiver indisponível, sinalize ao fiscal`
 
   // ─── CHAMADA ANTHROPIC ────────────────────────────────────────────────────
   try {
@@ -234,11 +338,11 @@ ${contextoLegislativo}
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 4000,
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8000,
         system: SYSTEM_PROMPT,
         messages: [
-          ...(historico || []),
+          ...historicoTratado,
           { role: 'user', content: mensagem }
         ]
       })
@@ -250,9 +354,17 @@ ${contextoLegislativo}
     }
 
     const antData = await antResp.json()
+
     return res.status(200).json({
       resposta: antData.content[0].text,
-      trechosConsultados: contextoLegislativo ? 12 : 0
+      // Metadados úteis para debug — remova em produção se quiser
+      _debug: {
+        ragStatus,
+        modelo: 'claude-sonnet-4-6',
+        inputTokens: antData.usage?.input_tokens,
+        outputTokens: antData.usage?.output_tokens,
+        historicoTurnos: historicoTratado.length / 2
+      }
     })
 
   } catch (err) {
