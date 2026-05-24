@@ -183,12 +183,16 @@ export default function Home() {
           const msgs = chatRef.current.querySelectorAll('[data-tipo="agent"]')
           if (msgs.length > 0) {
             const ultimaMsg = msgs[msgs.length - 1]
-            chatRef.current.scrollTo({ top: ultimaMsg.offsetTop - 16, behavior: 'smooth' })
+            // Scroll para o início da mensagem do agente
+            chatRef.current.scrollTo({ top: ultimaMsg.offsetTop - 20, behavior: 'smooth' })
+            // Tirar o foco do input para o fiscal ver a resposta
+            if (inputRef.current) inputRef.current.blur()
           }
-        }, 120)
+        }, 150)
         return
       }
     }
+    // Mensagem do usuário: scroll para baixo
     chatRef.current.scrollTop = chatRef.current.scrollHeight
   }, [mensagens, carregando])
 
@@ -269,7 +273,13 @@ export default function Home() {
   const enviar = async (msgCustom) => {
     const msg = msgCustom || input.trim()
     if ((!msg && imagens.length === 0) || carregando) return
-    if (!msgCustom) setInput('')
+    if (!msgCustom) {
+      setInput('')
+      // Resetar altura do textarea
+      if (inputRef.current) {
+        inputRef.current.style.height = 'auto'
+      }
+    }
     setCarregando(true)
 
     const imagensEnviadas = [...imagens]
@@ -322,7 +332,7 @@ export default function Home() {
     }
 
     setCarregando(false)
-    inputRef.current?.focus()
+    // Não refocar o input — deixar o fiscal ler a resposta
   }
 
   const enviarRespostas = (msgIdx) => {
