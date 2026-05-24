@@ -233,7 +233,7 @@ Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributa
         },
         body: JSON.stringify({
           model: 'text-embedding-3-small',
-          input: mensagem.substring(0, 8000)
+          input: (mensagem || 'análise de documentos fiscais').substring(0, 8000)
         })
       })
 
@@ -309,9 +309,15 @@ Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributa
 
   // ─── CORTAR HISTÓRICO PARA NÃO ESTOURAR CONTEXTO ─────────────────────────
   // Mantém os últimos N turnos (cada turno = 1 user + 1 assistant)
-  const historicoTratado = Array.isArray(historico)
-    ? historico.slice(-(MAX_HISTORICO * 2))
-    : []
+  // Filtra mensagens com conteúdo vazio ou nulo para evitar erro da API
+  const historicoTratado = (Array.isArray(historico) ? historico : [])
+    .slice(-(MAX_HISTORICO * 2))
+    .filter(msg => {
+      if (!msg || !msg.role) return false
+      if (typeof msg.content === 'string') return msg.content.trim() !== ''
+      if (Array.isArray(msg.content)) return msg.content.length > 0
+      return false
+    })
 
   // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────
   const SYSTEM_PROMPT = `Você é o ORÁCULO FISCAL MS — especialista jurídico-tributário com 20 anos de experiência na fiscalização volante da SEFAZ-MS. Domina a Lei nº 1.810/97, o RICMS/MS (Decreto nº 9.203/98) e toda a legislação complementar do Estado de Mato Grosso do Sul.
