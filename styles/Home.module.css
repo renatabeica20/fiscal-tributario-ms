@@ -16,6 +16,7 @@
   background: linear-gradient(135deg, #0d2f5e 0%, #1a4a8a 60%, #1e56a0 100%);
   border-bottom: 4px solid #e8a000;
   padding: 0;
+  padding-top: env(safe-area-inset-top);
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
@@ -517,6 +518,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
+  padding-top: max(16px, calc(16px + env(safe-area-inset-top)));
   background: #0d2f5e;
   border-bottom: 3px solid #e8a000;
 }
@@ -695,21 +697,6 @@
 .btnAnexar:hover:not(:disabled) { border-color: #1a4a8a; background: #eef4fb; }
 .btnAnexar:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* Preenche safe area inferior com a cor do inputArea */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .app::after {
-    content: '';
-    display: block;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-bottom);
-    background: #ffffff;
-    z-index: 10;
-  }
-}
-
 /* ============ MOBILE ============ */
 @media (max-width: 768px) {
   .app {
@@ -720,10 +707,6 @@
     top: 0;
     left: 0;
     overflow: hidden;
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    box-sizing: border-box;
   }
 
   .chat {
@@ -814,7 +797,9 @@
   }
 
   .inputArea {
-    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+    padding: 10px 12px;
+    padding-bottom: max(12px, calc(12px + env(safe-area-inset-bottom)));
+    background: #ffffff;
   }
 
   .inputWrapper {
