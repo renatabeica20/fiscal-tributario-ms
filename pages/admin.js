@@ -92,7 +92,7 @@ export default function Admin() {
           <div className={styles.logo}>§</div>
           <div>
             <h1 className={styles.titulo}>Administração — Oráculo Fiscal MS</h1>
-            <p className={styles.subtitulo}>Gerenciamento de fiscais e acessos</p>
+            <p className={styles.subtitulo}>Ferramenta de apoio operacional</p>
           </div>
           <div className={styles.headerAcoes}>
             <button className={styles.btnVoltar} onClick={() => router.push('/')}>Ir ao agente</button>
