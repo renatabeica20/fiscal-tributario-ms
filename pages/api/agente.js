@@ -96,12 +96,6 @@ Apenas multa sem ICMS — mercadorias em regime de SUBSTITUIÇÃO TRIBUTÁRIA: o
 ## FECOMP — ART. 41-A, LEI 1.810/97
 Adicional de 2% sobre operações com mercadorias sujeitas ao FECOMP (bebidas alcoólicas e outros produtos definidos em lei). Incide tanto na operação própria quanto na ST. Base de cálculo para FECOMP ST: PMPF definido por Portaria SAT. Pode gerar TVF complementar ao termo principal quando o FECOMP não foi destacado ou recolhido corretamente.
 
-## REDUÇÃO DE MULTA — ART. 118, LEI 1.810/97
-60% de redução — pagamento no ato da fiscalização
-50% de redução — pagamento antes do ALIM
-20% de redução — pagamento em até 20 dias após o ALIM
-Condição: quitação juntamente com as demais partes do crédito tributário.
-
 ## BENEFÍCIOS FISCAIS E PERDA DO BENEFÍCIO
 Cesta básica: redução de BC prevista no art. 52, Anexo I, RICMS/MS. Condicionada ao cumprimento das obrigações fiscal principal e acessórias (art. 55, Anexo I). Constatada irregularidade fiscal tendente a ocultar operação tributável: perda do benefício + aplicação da alíquota cheia sobre o valor integral da operação + dedução do ICMS já destacado na NF.
 Ovos: redução de BC conforme Subanexo 13 ao Anexo I, art. 1º, XVI. Aplicar mesmo na autuação.
@@ -131,7 +125,7 @@ DESCARREGAMENTO EM LOCAL DIVERSO: flagrante de descarga em estabelecimento difer
 ATENÇÃO: os códigos abaixo substituem os anteriores. Use SEMPRE os códigos novos para fatos ocorridos a partir de 01/07/2025.
 
 ### OPERAÇÃO DESACOMPANHADA DE DOCUMENTAÇÃO FISCAL
-Cód. Fato 576 | Penal 70 | Enquadramento 178
+Cód. Fato 576 
 Descrição: entrega, remessa, transporte, recebimento, estocagem, depósito, posse ou propriedade de mercadoria ou bem desacompanhados de documentação fiscal — TRIBUTADAS INTERNAMENTE.
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92, Lei 1.810/97; Art. 98, parágrafo único, RICMS (Dec. 9.203/98).
 Fundamentação multa: Art. 117, III, "a", item 1; §16, I, "a", Lei 1.810/97.
@@ -139,14 +133,14 @@ Multa: 100% do valor do imposto. NÃO permitir redução no termo.
 Observação: quando existir exigência do imposto, deve incidir também a multa moratória dos incisos I a VII do art. 119, Lei 1.810/97, sem prejuízo da multa do art. 117, III, "a".
 Fato antigo: 532
 
-Cód. Fato 577 | Penal 71 | Enquadramento 179
+Cód. Fato 577
 Descrição: entrega, remessa, transporte, recebimento, estocagem, depósito, posse ou propriedade de mercadoria ou bem desacompanhados de documentação fiscal — NÃO TRIBUTADAS INTERNAMENTE.
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92, Lei 1.810/97; Art. 98, parágrafo único, RICMS (Dec. 9.203/98).
 Fundamentação multa: Art. 117, III, "a", item 2; §16, II, "a" e "b"; §17, Lei 1.810/97.
 Multa: 5% do valor da operação, não inferior a 20 UFERMS nem superior a 200 UFERMS. Informar somente campo da base de cálculo.
 Fato antigo: 533
 
-Cód. Fato 580 | Penal 74 | Enquadramento 181
+Cód. Fato 580
 Descrição: entrega, remessa, transporte, recebimento, estocagem, depósito, posse ou propriedade de mercadoria ou bem desacompanhados de documentação fiscal — PARCIALMENTE TRIBUTADAS INTERNAMENTE.
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92, Lei 1.810/97; Art. 98, parágrafo único, RICMS (Dec. 9.203/98).
 Fundamentação multa: Art. 117, III, "a", itens 1 e 2; §16, I, "b", Lei 1.810/97.
@@ -154,54 +148,54 @@ Multa: 100% do valor do imposto (parte tributada) + 5% do valor da redução nã
 Fato antigo: 534
 
 ### OPERAÇÃO ACOMPANHADA DE DOC. FISCAL INIDÔNEA — FRAUDE COMPROVADA (art. 93, II)
-Cód. Fato 581 | Penal 70 | Enquadramento 178 — TRIBUTADAS INTERNAMENTE (fato antigo: 511)
-Cód. Fato 582 | Penal 71 | Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 512)
-Cód. Fato 583 | Penal 74 | Enquadramento 181 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 513)
+Cód. Fato 581 — TRIBUTADAS INTERNAMENTE (fato antigo: 511)
+Cód. Fato 582 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 512)
+Cód. Fato 583 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 513)
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92; Art. 93, II, Lei 1.810/97; Art. 98, parágrafo único, RICMS.
 
 ### OPERAÇÃO ACOMPANHADA DE DOC. FISCAL INIDÔNEA — TRANSMITENTE FICTÍCIO (art. 93, III)
-Cód. Fato 584 | Penal 70 | Enquadramento 178 — TRIBUTADAS INTERNAMENTE (fato antigo: 514)
-Cód. Fato 585 | Penal 71 | Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 515)
-Cód. Fato 586 | Penal 74 | Enquadramento 181 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 516)
+Cód. Fato 584 — TRIBUTADAS INTERNAMENTE (fato antigo: 514)
+Cód. Fato 585 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 515)
+Cód. Fato 586 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 516)
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92; Art. 93, III, Lei 1.810/97; Art. 98, parágrafo único, RICMS.
 
 ### OPERAÇÃO ACOMPANHADA DE DOC. FISCAL INIDÔNEA — DESTINATÁRIO DIVERSO (art. 93, IV)
-Cód. Fato 587 | Penal 70 | Enquadramento 178 — TRIBUTADAS INTERNAMENTE (fato antigo: 517)
-Cód. Fato 588 | Penal 71 | Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 518)
-Cód. Fato 589 | Penal 74 | Enquadramento 181 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 519)
+Cód. Fato 587 — TRIBUTADAS INTERNAMENTE (fato antigo: 517)
+Cód. Fato 588 — Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 518)
+Cód. Fato 589 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 519)
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92; Art. 93, IV, Lei 1.810/97; Art. 98, parágrafo único, RICMS.
 
 ### OPERAÇÃO ACOMPANHADA DE DOC. FISCAL INIDÔNEA — CANCELAMENTO DA IE (art. 93, V)
-Cód. Fato 590 | Penal 70 | Enquadramento 178 — TRIBUTADAS INTERNAMENTE (fato antigo: 520)
-Cód. Fato 591 | Penal 71 | Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 521)
-Cód. Fato 592 | Penal 74 | Enquadramento 181 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 522)
+Cód. Fato 590 — TRIBUTADAS INTERNAMENTE (fato antigo: 520)
+Cód. Fato 591 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 521)
+Cód. Fato 592 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 522)
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92; Art. 93, V, Lei 1.810/97; Art. 98, parágrafo único, RICMS.
 
 ### OPERAÇÃO ACOMPANHADA DE DOC. FISCAL INIDÔNEA — INOBSERVÂNCIA DE OBRIGAÇÃO ACESSÓRIA (art. 93, VI)
-Cód. Fato 593 | Penal 70 | Enquadramento 178 — TRIBUTADAS INTERNAMENTE (fato antigo: 523)
-Cód. Fato 594 | Penal 71 | Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 524)
-Cód. Fato 595 | Penal 74 | Enquadramento 181 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 525)
+Cód. Fato 593 — TRIBUTADAS INTERNAMENTE (fato antigo: 523)
+Cód. Fato 594 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 524)
+Cód. Fato 595 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 525)
 Fundamentação infração: Art. 5º, I, §2º, III; Art. 13, XVII; Art. 14, I, "b"; Art. 45, II; Art. 61; Art. 90, I; Art. 92; Art. 93, VI, Lei 1.810/97; Art. 98, parágrafo único, RICMS.
 
 ### MULTA — DOCUMENTAÇÃO FISCAL VENCIDA (art. 93, VII)
-Cód. Fato 596 | Penal 70 | Enquadramento 178 — TRIBUTADAS INTERNAMENTE (fato antigo: 529)
-Cód. Fato 597 | Penal 71 | Enquadramento 179 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 530)
-Cód. Fato 598 | Penal 74 | Enquadramento 581 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 531)
+Cód. Fato 596 — TRIBUTADAS INTERNAMENTE (fato antigo: 529)
+Cód. Fato 597 — NÃO TRIBUTADAS INTERNAMENTE (fato antigo: 530)
+Cód. Fato 598 — PARCIALMENTE TRIBUTADAS INTERNAMENTE (fato antigo: 531)
 Fundamentação: Art. 5º, I, §2º e §6º; Art. 93, VII e parágrafo único, Lei 1.810/97 c/c Art. 2º, §2º, Anexo XV; Art. 1º e Art. 3º, §1º, Subanexo V ao Anexo XV, RICMS (Dec. 9.203/98).
 
 ### TRANSPORTE — CONHECIMENTO DE TRANSPORTE
-Cód. Fato 578 | Penal 72 | Enquadramento 180
+Cód. Fato 578
 Prestação de serviço de transporte acompanhada de doc. fiscal inidônea — Conhecimento de Transporte Inidôneo.
 Multa: Art. 117, IV, "b", Lei 1.810/97.
 
-Cód. Fato 579 | Penal 73 | Enquadramento 180
+Cód. Fato 579
 Falta de emissão do Conhecimento de Transporte Eletrônico — imposto e multa de 10% sobre o valor do serviço.
 Multa: Art. 117, III, "c", Lei 1.810/97.
 
 ### REGRA GERAL DE MULTAS (Lei 6.439/2025)
-Fatos 576, 581, 584, 587, 590, 593, 596 → MULTA 100% DO VALOR DO IMPOSTO — NÃO permitir redução no termo.
-Fatos 577, 582, 585, 588, 591, 594, 597 → MULTA 5% DO VALOR DA OPERAÇÃO, não inferior a 20 UFERMS nem superior a 200 UFERMS — informar somente campo da base de cálculo.
-Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributada) + 5% DO VALOR DA REDUÇÃO — permitir redução no termo.
+Fatos 576, 581, 584, 587, 590, 593, 596 → MULTA 100% DO VALOR DO IMPOSTO.
+Fatos 577, 582, 585, 588, 591, 594, 597 → MULTA 5% DO VALOR DA OPERAÇÃO, não inferior a 20 UFERMS nem superior a 200 UFERMS.
+Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributada) + 5% DO VALOR DA REDUÇÃO.
 
 ### COMO ESCOLHER O CÓDIGO CORRETO
 1. A mercadoria está DESACOMPANHADA de qualquer documento? → Fatos 576/577/580
@@ -390,6 +384,7 @@ Elabore a matéria tributária com os dados fornecidos. Estrutura obrigatória e
 
 Regras de redação:
 - Português formal, sem caixa alta excessiva, sem subtítulos, sem negrito — texto corrido
+- Datas e horas SEMPRE no formato: "24 de abril de 2026, às 14h35min" — nunca por extenso ("vinte e quatro de abril")
 - Cada informação aparece uma única vez
 - Cite apenas artigos das fontes autorizadas (base vetorial ou BASE_LEI)
 - Delimite a matéria com:
