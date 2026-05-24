@@ -705,6 +705,11 @@
     top: 0;
     left: 0;
     overflow: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    box-sizing: border-box;
   }
 
   .chat {
@@ -795,7 +800,7 @@
   }
 
   .inputArea {
-    padding: 10px 12px 12px;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
   }
 
   .inputWrapper {
