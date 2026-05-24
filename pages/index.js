@@ -379,7 +379,7 @@ export default function Home() {
           <div className={styles.logo}>§</div>
           <div className={styles.headerTexto}>
             <h1 className={styles.titulo}>Oráculo Fiscal MS</h1>
-            <p className={styles.subtitulo}>Consultoria Jurídico-Tributária e Apoio à Fiscalização Volante — SEFAZ-MS</p>
+            <p className={styles.subtitulo}>Especialista em legislação tributária do Estado de Mato Grosso do Sul</p>
           </div>
           <div className={styles.headerBadge}>Lei 1.810/97 · RICMS/MS</div>
           <div className={styles.fontControls}>
@@ -403,7 +403,7 @@ export default function Home() {
         {mensagens.length === 0 && (
           <div className={styles.welcome}>
             <h2>Oráculo Fiscal MS</h2>
-            <p>Consultoria jurídico-tributária especializada em legislação do MS.<br />
+            <p>Especialista em legislação tributária do Estado de Mato Grosso do Sul.<br />
             Análise de casos, enquadramento legal e elaboração de documentos fiscais.<br />
             <span style={{ fontSize: '0.8rem', color: '#90a4ae' }}>Você pode anexar fotos de documentos, NFs, CNH e CRLV usando o ícone 📎.</span></p>
           </div>
