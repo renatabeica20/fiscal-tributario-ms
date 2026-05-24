@@ -111,6 +111,7 @@ export default function Home() {
   const [fontSize, setFontSize] = useState(14)
   const [imagens, setImagens] = useState([]) // [{nome, base64, mediaType}]
   const [painelHistorico, setPainelHistorico] = useState(false)
+  const [avisoLimite, setAvisoLimite] = useState(false)
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const chatRef = useRef(null)
@@ -193,6 +194,7 @@ export default function Home() {
     const MAX = 8
     const novas = []
     for (const file of Array.from(files)) {
+      if (imagens.length >= MAX) { setAvisoLimite(true); break }
       if (imagens.length + novas.length >= MAX) break
       const tipo = file.type
       if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'].includes(tipo)) continue
@@ -498,8 +500,57 @@ export default function Home() {
             </svg>
           </button>
         </div>
-        <p className={styles.hint}>Enter para enviar · Shift+Enter para nova linha · 📎 para anexar documentos (máx. 8)</p>
+
       </div>
+    </div>
+
+      {/* POP-UP LIMITE DE ANEXOS */}
+      {avisoLimite && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(6,26,54,0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px'
+        }} onClick={() => setAvisoLimite(false)}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '32px 28px',
+            maxWidth: '340px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(6,26,54,0.4)',
+            borderTop: '4px solid #e8a000',
+            animation: 'fadeUp 0.25s ease'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📎</div>
+            <h3 style={{
+              color: '#0d2f5e', fontSize: '1rem', fontWeight: 700,
+              marginBottom: '8px', letterSpacing: '-0.01em'
+            }}>Limite de anexos atingido</h3>
+            <p style={{
+              color: '#546e7a', fontSize: '0.85rem', lineHeight: 1.6,
+              marginBottom: '24px'
+            }}>
+              O limite máximo é de <strong style={{color:'#0d2f5e'}}>8 arquivos</strong> por mensagem.<br />
+              Remova um anexo para adicionar outro.
+            </p>
+            <button
+              onClick={() => setAvisoLimite(false)}
+              style={{
+                background: 'linear-gradient(135deg, #1a4a8a, #0d2f5e)',
+                color: '#fff', border: 'none', borderRadius: '9px',
+                padding: '11px 32px', fontSize: '0.85rem', fontWeight: 700,
+                cursor: 'pointer', letterSpacing: '0.04em',
+                boxShadow: '0 8px 20px rgba(13,47,94,0.4)'
+              }}
+            >
+              ENTENDIDO
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
