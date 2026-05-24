@@ -65,7 +65,7 @@ function formatarRespostas(perguntas) {
 function detectarTipoDocumento(texto) {
   const t = texto.toUpperCase()
   if (t.includes('TERMO DE VERIFICAÇÃO FISCAL') || t.includes('TVF')) return 'TVF'
-  if (t.includes('TERMO DE APREENSÃO') || t.includes('TAD') || t.includes('TA ')) return 'TAD'
+  if (t.includes('TERMO DE APREENSÃO') || t.includes('TA ') || t.includes(' TA')) return 'TA'
   if (t.includes('AUTO DE LANÇAMENTO') || t.includes('ALIM')) return 'ALIM'
   if (t.includes('CONTESTAÇÃO') || t.includes('IMPUGNAÇÃO')) return 'Contestação'
   return null
