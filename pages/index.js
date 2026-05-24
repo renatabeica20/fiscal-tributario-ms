@@ -257,12 +257,26 @@ export default function Home() {
       if (imagens.length + novas.length >= MAX) break
       const tipo = file.type
       if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'].includes(tipo)) continue
-      const base64 = await new Promise((res) => {
-        const r = new FileReader()
-        r.onload = () => res(r.result.split(',')[1])
-        r.readAsDataURL(file)
-      })
-      novas.push({ nome: file.name, base64, mediaType: tipo, tamanho: file.size })
+
+      // Upload direto para o Supabase Storage (evita limite 4.5MB do Vercel)
+      const nomeArquivo = `${fiscal?.id || 'fiscal'}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { error } = await supabase.storage
+        .from('anexos-fiscais')
+        .upload(nomeArquivo, file, { contentType: tipo, upsert: false })
+
+      if (error) {
+        console.error('Erro no upload:', error.message)
+        continue
+      }
+
+      // Gerar URL assinada com validade de 1 hora
+      const { data: urlData } = await supabase.storage
+        .from('anexos-fiscais')
+        .createSignedUrl(nomeArquivo, 3600)
+
+      if (!urlData?.signedUrl) continue
+
+      novas.push({ nome: file.name, signedUrl: urlData.signedUrl, mediaType: tipo, tamanho: file.size, path: nomeArquivo })
     }
     setImagens(prev => [...prev, ...novas].slice(0, MAX))
   }
@@ -298,7 +312,7 @@ export default function Home() {
         body: JSON.stringify({
           mensagem: msg,
           historico,
-          imagens: imagensEnviadas.map(i => ({ base64: i.base64, mediaType: i.mediaType, nome: i.nome })),
+          imagens: imagensEnviadas.map(i => ({ signedUrl: i.signedUrl, mediaType: i.mediaType, nome: i.nome })),
           fiscalId: fiscal?.id
         })
       })
