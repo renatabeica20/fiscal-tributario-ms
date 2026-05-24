@@ -130,6 +130,9 @@ export default function Home() {
   const [imagens, setImagens] = useState([])
   const [painelHistorico, setPainelHistorico] = useState(false)
   const [avisoLimite, setAvisoLimite] = useState(false)
+  const [popupSalvar, setPopupSalvar] = useState(null) // { texto, textoCopiar }
+  const [confirmarExclusao, setConfirmarExclusao] = useState(null) // doc a excluir
+  const [labelSalvar, setLabelSalvar] = useState('')
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [datasExpandidas, setDatasExpandidas] = useState({})
@@ -313,7 +316,6 @@ export default function Home() {
         return novo
       })
 
-      await salvarDocumento(data.resposta)
 
     } catch (err) {
       setMensagens(prev => [...prev, { tipo: 'agent', texto: `Erro: ${err.message}`, erro: true }])
@@ -344,34 +346,59 @@ export default function Home() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() }
   }
 
-  const copiarTexto = (texto, btnEl) => {
-    let textoCopiar = texto
+  const copiarTexto = (texto) => {
     const inicio = texto.indexOf('===MATERIA_INICIO===')
     const fim = texto.indexOf('===MATERIA_FIM===')
     const eMateria = inicio !== -1 && fim !== -1
-    if (eMateria) textoCopiar = texto.substring(inicio + 20, fim).trim()
-    const feedback = (btn) => {
-      if (!btn) return
-      const original = btn.textContent
-      btn.textContent = '✓ Copiado!'
-      btn.style.borderColor = '#3fb950'
-      btn.style.color = '#3fb950'
-      // Limpar conversa somente após copiar matéria tributária completa
-      if (eMateria) {
-        setTimeout(() => {
-          setMensagens([])
-          setHistorico([])
-          setRespostasAtivas({})
-          try { localStorage.removeItem('ofms_conversa') } catch (e) {}
-        }, 1500)
-      } else {
-        setTimeout(() => { btn.textContent = original; btn.style.borderColor = ''; btn.style.color = '' }, 2000)
-      }
+    const textoCopiar = eMateria ? texto.substring(inicio + 20, fim).trim() : texto
+    if (eMateria) {
+      // Pré-preencher com tipo + autuado detectados
+      const tipoDoc = detectarTipoDocumento(texto) || ''
+      const autuadoDoc = extrairAutuado(textoCopiar) || ''
+      setLabelSalvar(tipoDoc ? `${tipoDoc} - ` : '')
+      setPopupSalvar({ textoCopiar, autuado: autuadoDoc })
+    } else {
+      navigator.clipboard.writeText(textoCopiar)
     }
-    navigator.clipboard.writeText(textoCopiar).then(() => feedback(btnEl)).catch(() => {
+  }
+
+  const confirmarSalvar = async () => {
+    if (!popupSalvar) return
+    const { textoCopiar } = popupSalvar
+    // Copiar para clipboard
+    try {
+      await navigator.clipboard.writeText(textoCopiar)
+    } catch (e) {
       const el = document.createElement('textarea')
-      el.value = textoCopiar; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); feedback(btnEl)
-    })
+      el.value = textoCopiar; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el)
+    }
+    // Salvar no banco com label do fiscal
+    if (fiscal) {
+      const tipo = detectarTipoDocumento(textoCopiar) || 'TVF'
+      await supabase.from('historico_documentos').upsert({
+        fiscal_id: fiscal.id,
+        tipo,
+        autuado: popupSalvar.autuado,
+        infracao: labelSalvar.replace(tipo, '').replace(/^[\s\-]+|[\s\-]+$/g, '') || null,
+        materia_tributaria: textoCopiar,
+        conversa: historico.slice(-10)
+      })
+    }
+    setPopupSalvar(null)
+    setLabelSalvar('')
+    // Limpar conversa
+    setTimeout(() => {
+      setMensagens([])
+      setHistorico([])
+      setRespostasAtivas({})
+      try { localStorage.removeItem('ofms_conversa') } catch (e) {}
+    }, 400)
+  }
+
+  const excluirDocumento = async (doc) => {
+    await supabase.from('historico_documentos').delete().eq('id', doc.id)
+    setHistoricoDocumentos(prev => prev.filter(d => d.id !== doc.id))
+    setConfirmarExclusao(null)
   }
 
   const usarComoBase = (doc) => {
@@ -455,9 +482,18 @@ export default function Home() {
                         </div>
                         {doc.autuado && <p className={styles.painelAutuado}>{doc.autuado}</p>}
                         <div className={styles.painelAcoes}>
-                          <button className={styles.painelBtnUsar} style={{fontSize:'0.78rem',padding:'6px 16px',width:'auto'}} onClick={() => setDocVisualizando(doc)}>
+                          <button className={styles.painelBtnUsar} style={{fontSize:'0.78rem',padding:'6px 16px',flex:1}} onClick={() => setDocVisualizando(doc)}>
                             👁 Ver documento
                           </button>
+                          <button
+                            onClick={() => setConfirmarExclusao(doc)}
+                            title="Excluir documento"
+                            style={{
+                              background:'transparent',border:'1px solid #ffcdd2',borderRadius:'7px',
+                              color:'#c62828',padding:'6px 10px',fontSize:'0.85rem',
+                              cursor:'pointer',flexShrink:0
+                            }}
+                          >🗑</button>
                         </div>
                       </div>
                     ))}
@@ -608,7 +644,7 @@ export default function Home() {
                     ) : (
                       <>
                         <div dangerouslySetInnerHTML={{ __html: formatarTexto(msg.texto) }} />
-                        <button onClick={(e) => copiarTexto(msg.texto, e.currentTarget)} className={styles.btnCopiar}>📋 Copiar matéria</button>
+                        <button onClick={() => copiarTexto(msg.texto)} className={styles.btnCopiar}>📋 Copiar matéria</button>
                       </>
                     )}
                   </div>
@@ -666,6 +702,114 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* POP-UP SALVAR DOCUMENTO */}
+      {popupSalvar && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(6,26,54,0.65)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }} onClick={() => setPopupSalvar(null)}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', padding: '32px 28px',
+            maxWidth: '420px', width: '100%', textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(6,26,54,0.4)', borderTop: '4px solid #e8a000'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💾</div>
+            <h3 style={{ color: '#0d2f5e', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>
+              Salvar e copiar documento
+            </h3>
+            <p style={{ color: '#546e7a', fontSize: '0.82rem', marginBottom: '20px', lineHeight: 1.5 }}>
+              Como quer identificar este documento no histórico?<br/>
+              <span style={{ fontSize: '0.75rem', color: '#90a4ae' }}>Ex: TVF - Fato 593, TA - Mercadoria sem NF</span>
+            </p>
+            <input
+              type="text"
+              value={labelSalvar}
+              onChange={e => setLabelSalvar(e.target.value)}
+              placeholder="Ex: TVF - Fato 593"
+              autoFocus
+              style={{
+                width: '100%', padding: '11px 14px', border: '2px solid #b0c4de',
+                borderRadius: '9px', fontSize: '0.92rem', color: '#0d2f5e',
+                outline: 'none', boxSizing: 'border-box', marginBottom: '20px',
+                fontFamily: 'inherit', transition: 'border-color 0.2s'
+              }}
+              onFocus={e => e.target.style.borderColor = '#1a4a8a'}
+              onBlur={e => e.target.style.borderColor = '#b0c4de'}
+              onKeyDown={e => { if (e.key === 'Enter') confirmarSalvar() }}
+            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={confirmarSalvar}
+                style={{
+                  flex: 1, background: 'linear-gradient(135deg, #1a4a8a, #0d2f5e)',
+                  color: '#fff', border: 'none', borderRadius: '9px', padding: '12px',
+                  fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer'
+                }}
+              >
+                ✓ Salvar e copiar
+              </button>
+              <button
+                onClick={() => setPopupSalvar(null)}
+                style={{
+                  background: '#f0f4f8', color: '#546e7a', border: '1px solid #c3d0e0',
+                  borderRadius: '9px', padding: '12px 16px', fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP CONFIRMAÇÃO DE EXCLUSÃO */}
+      {confirmarExclusao && (
+        <div style={{
+          position:'fixed',inset:0,zIndex:10000,
+          background:'rgba(6,26,54,0.65)',backdropFilter:'blur(4px)',
+          display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'
+        }} onClick={() => setConfirmarExclusao(null)}>
+          <div style={{
+            background:'#fff',borderRadius:'16px',padding:'32px 28px',
+            maxWidth:'360px',width:'100%',textAlign:'center',
+            boxShadow:'0 24px 60px rgba(6,26,54,0.4)',borderTop:'4px solid #e53935'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{fontSize:'2rem',marginBottom:'8px'}}>🗑</div>
+            <h3 style={{color:'#0d2f5e',fontSize:'1rem',fontWeight:700,marginBottom:'8px'}}>
+              Excluir documento?
+            </h3>
+            <p style={{color:'#546e7a',fontSize:'0.85rem',lineHeight:1.6,marginBottom:'6px'}}>
+              <strong style={{color:'#0d2f5e'}}>{confirmarExclusao.tipo}{confirmarExclusao.infracao ? ` · ${confirmarExclusao.infracao}` : ''}</strong>
+            </p>
+            {confirmarExclusao.autuado && (
+              <p style={{color:'#546e7a',fontSize:'0.82rem',marginBottom:'20px'}}>{confirmarExclusao.autuado}</p>
+            )}
+            <p style={{color:'#c62828',fontSize:'0.78rem',marginBottom:'20px',fontFamily:'monospace'}}>
+              Esta ação não pode ser desfeita.
+            </p>
+            <div style={{display:'flex',gap:'10px'}}>
+              <button
+                onClick={() => excluirDocumento(confirmarExclusao)}
+                style={{
+                  flex:1,background:'#e53935',color:'#fff',border:'none',
+                  borderRadius:'9px',padding:'12px',fontSize:'0.88rem',
+                  fontWeight:700,cursor:'pointer'
+                }}
+              >Excluir</button>
+              <button
+                onClick={() => setConfirmarExclusao(null)}
+                style={{
+                  background:'#f0f4f8',color:'#546e7a',border:'1px solid #c3d0e0',
+                  borderRadius:'9px',padding:'12px 16px',fontSize:'0.85rem',cursor:'pointer'
+                }}
+              >Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* POP-UP LIMITE DE ANEXOS */}
       {avisoLimite && (
