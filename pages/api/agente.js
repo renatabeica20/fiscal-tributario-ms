@@ -462,17 +462,10 @@ REGRAS FINAIS INVIOLÁVEIS
         const arrayBuffer = await fileResp.arrayBuffer()
         const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-        if (img.mediaType === 'application/pdf') {
-          partes.push({
-            type: 'document',
-            source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-          })
-        } else {
-          partes.push({
-            type: 'image',
-            source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: base64 }
-          })
-        }
+        partes.push({
+          type: 'image',
+          source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: base64 }
+        })
       } catch (e) {
         console.error('Erro ao buscar arquivo do Storage:', e.message)
       }
