@@ -248,6 +248,43 @@ export default function Home() {
 
   }
 
+  // ── Compressor de imagem (máx 3MB, qualidade progressiva) ───────────────
+  const comprimirImagem = (file) => new Promise((resolve) => {
+    const MAX_BYTES = 3 * 1024 * 1024 // 3MB
+    if (file.size <= MAX_BYTES) { resolve(file); return }
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const canvas = document.createElement('canvas')
+      let { width, height } = img
+      // Reduzir dimensões se muito grande
+      const MAX_DIM = 2048
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+      // Tentar qualidades decrescentes até caber em 3MB
+      let quality = 0.85
+      const tryCompress = () => {
+        canvas.toBlob((blob) => {
+          if (blob.size <= MAX_BYTES || quality <= 0.4) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+          } else {
+            quality -= 0.1
+            tryCompress()
+          }
+        }, 'image/jpeg', quality)
+      }
+      tryCompress()
+    }
+    img.src = url
+  })
+
   // ── Upload de imagens ─────────────────────────────────────────────────────
   const handleFiles = async (files) => {
     const MAX = 8
@@ -258,11 +295,15 @@ export default function Home() {
       const tipo = file.type
       if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'].includes(tipo)) continue
 
+      // Comprimir imagens antes do upload (PDFs não são comprimidos)
+      const fileParaUpload = tipo !== 'application/pdf' ? await comprimirImagem(file) : file
+      const tipoFinal = tipo !== 'application/pdf' ? 'image/jpeg' : tipo
+
       // Upload direto para o Supabase Storage (evita limite 4.5MB do Vercel)
       const nomeArquivo = `${fiscal?.id || 'fiscal'}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
       const { error } = await supabase.storage
         .from('anexos-fiscais')
-        .upload(nomeArquivo, file, { contentType: tipo, upsert: false })
+        .upload(nomeArquivo, fileParaUpload, { contentType: tipoFinal, upsert: false })
 
       if (error) {
         console.error('Erro no upload:', error.message)
@@ -276,7 +317,7 @@ export default function Home() {
 
       if (!urlData?.signedUrl) continue
 
-      novas.push({ nome: file.name, signedUrl: urlData.signedUrl, mediaType: tipo, tamanho: file.size, path: nomeArquivo })
+      novas.push({ nome: file.name, signedUrl: urlData.signedUrl, mediaType: tipoFinal, tamanho: fileParaUpload.size, path: nomeArquivo })
     }
     setImagens(prev => [...prev, ...novas].slice(0, MAX))
   }
