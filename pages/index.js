@@ -500,9 +500,7 @@ export default function Home() {
             </svg>
           </button>
         </div>
-
       </div>
-    </div>
 
       {/* POP-UP LIMITE DE ANEXOS */}
       {avisoLimite && (
@@ -521,8 +519,7 @@ export default function Home() {
             width: '100%',
             textAlign: 'center',
             boxShadow: '0 24px 60px rgba(6,26,54,0.4)',
-            borderTop: '4px solid #e8a000',
-            animation: 'fadeUp 0.25s ease'
+            borderTop: '4px solid #e8a000'
           }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📎</div>
             <h3 style={{
