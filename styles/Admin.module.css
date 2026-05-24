@@ -560,3 +560,15 @@
     font-size: 0.82rem;
   }
 }
+
+/* ============ TABELA SCROLL HORIZONTAL NO MOBILE ============ */
+@media (max-width: 600px) {
+  .card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabela {
+    min-width: 480px;
+  }
+}
