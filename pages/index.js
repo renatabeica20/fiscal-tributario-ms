@@ -76,18 +76,16 @@ function extrairAutuado(texto) {
 }
 
 function extrairFato(texto) {
-  // Tenta padrão "Fato XXX" ou "código XXX" ou "fato gerador XXX"
-  let match = texto.match(/fato\s+(?:gerador\s+)?n?[º°.]?\s*(\d{3,4})/i)
-  if (match) return match[1]
-  // Tenta "código XXX" ou "cód. XXX"
-  match = texto.match(/c[oó]d(?:igo)?\.?\s*(\d{3,4})/i)
-  if (match) return match[1]
-  // Tenta números de 3-4 dígitos que aparecem após "art." + depois "fato"
-  match = texto.match(/art\.?\s*\d+.*?fato\s+(\d{3,4})/is)
-  if (match) return match[1]
-  // Último recurso: qualquer número 3-4 dígitos entre 500-699 (range dos fatos MS)
-  match = texto.match(/([5-6]\d{2})/)
-  if (match) return match[1]
+  if (!texto) return null
+  // Padrão 1: "fato 593", "fato nº 593", "fato gerador 593"
+  var m = texto.match(/fato\s+(?:gerador\s+)?n?[\u00ba\u00b0.]?\s*(\d{3,4})/i)
+  if (m) return m[1]
+  // Padrão 2: "código 593", "cód. 593"
+  m = texto.match(/c[o\u00f3]d(?:igo)?[^\d]{0,20}(\d{3,4})/i)
+  if (m) return m[1]
+  // Padrão 3: número 500-699 isolado (range dos fatos SEFAZ/MS)
+  m = texto.match(/\b([5-6]\d{2})\b/)
+  if (m) return m[1]
   return null
 }
 
@@ -240,13 +238,7 @@ export default function Home() {
       conversa: historico.slice(-10)
     })
 
-    // Limpar conversa após salvar
-    setTimeout(() => {
-      setMensagens([])
-      setHistorico([])
-      setRespostasAtivas({})
-      try { localStorage.removeItem('ofms_conversa') } catch (e) {}
-    }, 2000)
+
   }
 
   // ── Upload de imagens ─────────────────────────────────────────────────────
@@ -356,14 +348,25 @@ export default function Home() {
     let textoCopiar = texto
     const inicio = texto.indexOf('===MATERIA_INICIO===')
     const fim = texto.indexOf('===MATERIA_FIM===')
-    if (inicio !== -1 && fim !== -1) textoCopiar = texto.substring(inicio + 20, fim).trim()
+    const eMateria = inicio !== -1 && fim !== -1
+    if (eMateria) textoCopiar = texto.substring(inicio + 20, fim).trim()
     const feedback = (btn) => {
       if (!btn) return
       const original = btn.textContent
       btn.textContent = '✓ Copiado!'
       btn.style.borderColor = '#3fb950'
       btn.style.color = '#3fb950'
-      setTimeout(() => { btn.textContent = original; btn.style.borderColor = ''; btn.style.color = '' }, 2000)
+      // Limpar conversa somente após copiar matéria tributária completa
+      if (eMateria) {
+        setTimeout(() => {
+          setMensagens([])
+          setHistorico([])
+          setRespostasAtivas({})
+          try { localStorage.removeItem('ofms_conversa') } catch (e) {}
+        }, 1500)
+      } else {
+        setTimeout(() => { btn.textContent = original; btn.style.borderColor = ''; btn.style.color = '' }, 2000)
+      }
     }
     navigator.clipboard.writeText(textoCopiar).then(() => feedback(btnEl)).catch(() => {
       const el = document.createElement('textarea')
