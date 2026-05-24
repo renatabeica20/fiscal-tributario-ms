@@ -3,8 +3,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método não permitido' })
   }
 
-  const { mensagem, historico } = req.body
-  if (!mensagem) return res.status(400).json({ error: 'Mensagem obrigatória' })
+  const { mensagem, historico, imagens } = req.body
+  if (!mensagem && (!imagens || imagens.length === 0)) return res.status(400).json({ error: 'Mensagem ou imagem obrigatória' })
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
   const OPENAI_KEY    = process.env.OPENAI_API_KEY
@@ -442,6 +442,27 @@ REGRAS FINAIS INVIOLÁVEIS
 - Quando o produto tiver alíquota ou BC diferenciada (GLP, ovos, cesta básica, ST, FECOMP), aplique o tratamento correto
 - Se a base vetorial estiver indisponível, sinalize ao fiscal`
 
+  // ─── MONTAR MENSAGEM DO USUÁRIO (com ou sem imagens) ────────────────────
+  let conteudoUsuario
+  if (imagens && imagens.length > 0) {
+    // Mensagem multimodal: imagens + texto
+    const partes = []
+    for (const img of imagens) {
+      partes.push({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: img.base64 }
+      })
+    }
+    if (mensagem && mensagem.trim()) {
+      partes.push({ type: 'text', text: mensagem })
+    } else {
+      partes.push({ type: 'text', text: 'Analise os documentos anexados, extraia todas as informações relevantes para a fiscalização e me informe o que ainda precisa ser complementado para elaborar o TVF ou TAD.' })
+    }
+    conteudoUsuario = partes
+  } else {
+    conteudoUsuario = mensagem
+  }
+
   // ─── CHAMADA ANTHROPIC ────────────────────────────────────────────────────
   try {
     const antResp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -457,7 +478,7 @@ REGRAS FINAIS INVIOLÁVEIS
         system: SYSTEM_PROMPT,
         messages: [
           ...historicoTratado,
-          { role: 'user', content: mensagem }
+          { role: 'user', content: conteudoUsuario }
         ]
       })
     })
