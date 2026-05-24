@@ -567,7 +567,7 @@ export default function Home() {
               </div>
             )}
             {/* Botão voltar — visível apenas no mobile */}
-            <div style={{padding:'12px 16px', borderTop:'1px solid #dde3ea', display:'flex'}}>
+            <div style={{padding:'12px 16px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', borderTop:'1px solid #dde3ea', display:'flex'}}>
               <button
                 onClick={() => setPainelHistorico(false)}
                 style={{
