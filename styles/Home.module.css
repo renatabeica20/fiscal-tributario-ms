@@ -49,6 +49,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  align-items: center;
+  text-align: center;
 }
 
 .titulo {
@@ -87,10 +89,12 @@
 }
 
 .nomeUsuario {
-  font-size: 0.75rem;
-  color: #a8c8e8;
-  font-family: monospace;
+  font-size: 0.82rem;
+  color: #b8d2ec;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .btnHistorico {
