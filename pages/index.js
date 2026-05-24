@@ -337,7 +337,7 @@ export default function Home() {
     <div className={styles.app}>
       {/* PAINEL HISTÓRICO */}
       {painelHistorico && (
-        <div className={styles.painelOverlay} onClick={() => setPainelHistorico(false)}>
+        <div className={styles.painelOverlay} style={{justifyContent:"flex-start"}} onClick={() => setPainelHistorico(false)}>
           <div className={styles.painel} onClick={e => e.stopPropagation()}>
             <div className={styles.painelHeader}>
               <h2 className={styles.painelTitulo}>📋 Histórico de Documentos</h2>
@@ -376,12 +376,11 @@ export default function Home() {
       {/* HEADER */}
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <div className={styles.logo}>§</div>
+          <div className={styles.logo}><span style={{display:"flex",flexDirection:"column",alignItems:"center",lineHeight:1,gap:"1px"}}><span style={{fontSize:"0.9rem",fontWeight:900,letterSpacing:"-0.03em",fontFamily:"Georgia,serif"}}>OF</span><span style={{fontSize:"0.42rem",fontWeight:700,letterSpacing:"0.25em",fontFamily:"monospace",opacity:0.85}}>MS</span></span></div>
           <div className={styles.headerTexto}>
             <h1 className={styles.titulo}>Oráculo Fiscal MS</h1>
             <p className={styles.subtitulo}>Especialista em legislação tributária do Estado de Mato Grosso do Sul</p>
           </div>
-          <div className={styles.headerBadge}>Lei 1.810/97 · RICMS/MS</div>
           <div className={styles.fontControls}>
             <button className={styles.btnFont} onClick={() => setFontSize(f => Math.max(FONT_MIN, f - 1))} disabled={fontSize <= FONT_MIN}>A−</button>
             <span className={styles.fontLabel}>{fontSize}px</span>
@@ -389,7 +388,7 @@ export default function Home() {
           </div>
           <div className={styles.headerUsuario}>
             <button className={styles.btnHistorico} onClick={abrirHistorico} title="Histórico de documentos">📋</button>
-            <span className={styles.nomeUsuario}>👮 {fiscal.nome}</span>
+            <span className={styles.nomeUsuario}>Olá, {fiscal.nome}</span>
             {fiscal.cargo === 'Administrador' && (
               <button className={styles.btnAdmin} onClick={() => router.push('/admin')}>Admin</button>
             )}
@@ -413,14 +412,14 @@ export default function Home() {
           <div key={msgIdx} data-tipo={msg.tipo} className={`${styles.msg} ${msg.tipo === 'user' ? styles.msgUser : styles.msgAgent}`}>
             {msg.tipo === 'user' ? (
               <div>
-                <div className={styles.msgUserLabel}>👮 {fiscal.nome}</div>
+                <div className={styles.msgUserLabel}>{fiscal.nome}</div>
                 <div className={styles.bubble}>
                   <span style={{ whiteSpace: 'pre-wrap', fontSize: `${fontSize}px` }}>{msg.texto}</span>
                 </div>
               </div>
             ) : (
               <>
-                <div className={styles.avatar}>§</div>
+                <div className={styles.avatar}><span style={{fontSize:"0.7rem",fontWeight:900,fontFamily:"Georgia,serif",letterSpacing:"-0.02em",lineHeight:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}><span>OF</span><span style={{fontSize:"0.4rem",letterSpacing:"0.2em",fontFamily:"monospace"}}>MS</span></span></div>
                 <div className={styles.msgAgentInner}>
                   <div className={styles.msgAgentLabel}>⚖ Oráculo Fiscal MS</div>
                   <div className={`${styles.bubble} ${msg.erro ? styles.bubbleErro : ''}`} style={{ fontSize: `${fontSize}px` }}>
@@ -453,7 +452,7 @@ export default function Home() {
 
         {carregando && (
           <div className={`${styles.msg} ${styles.msgAgent}`}>
-            <div className={styles.avatar}>§</div>
+            <div className={styles.avatar}><span style={{fontSize:"0.7rem",fontWeight:900,fontFamily:"Georgia,serif",letterSpacing:"-0.02em",lineHeight:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}><span>OF</span><span style={{fontSize:"0.4rem",letterSpacing:"0.2em",fontFamily:"monospace"}}>MS</span></span></div>
             <div className={styles.bubble}>
               <div className={styles.typing}><span></span><span></span><span></span></div>
             </div>
