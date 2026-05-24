@@ -143,22 +143,57 @@ export default function Home() {
   const FONT_MIN = 11
   const FONT_MAX = 20
 
-  // ── Persistência da conversa ──────────────────────────────────────────────
-  useEffect(() => {
-    try {
-      const salvo = localStorage.getItem('ofms_conversa')
-      if (salvo) {
-        const { mensagens: m, historico: h } = JSON.parse(salvo)
-        if (m?.length > 0) { setMensagens(m); setHistorico(h || []) }
-      }
-    } catch (e) {}
-  }, [])
+  // ── Persistência da conversa (Supabase — sincroniza entre dispositivos) ───
+  const sessaoIdRef = useRef(null)
 
+  // Carrega sessão ao autenticar
   useEffect(() => {
-    if (mensagens.length === 0) return
-    try {
-      localStorage.setItem('ofms_conversa', JSON.stringify({ mensagens, historico }))
-    } catch (e) {}
+    if (!fiscal) return
+    async function carregarSessao() {
+      const { data } = await supabase
+        .from('sessoes_chat')
+        .select('id, mensagens, historico')
+        .eq('fiscal_id', fiscal.id)
+        .order('atualizado_em', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (data) {
+        sessaoIdRef.current = data.id
+        if (data.mensagens?.length > 0) {
+          setMensagens(data.mensagens)
+          setHistorico(data.historico || [])
+        }
+      }
+    }
+    carregarSessao()
+  }, [fiscal])
+
+  // Salva sessão no Supabase sempre que mensagens mudam
+  useEffect(() => {
+    if (!fiscal || mensagens.length === 0) return
+    async function salvarSessao() {
+      const payload = {
+        fiscal_id: fiscal.id,
+        mensagens,
+        historico,
+        atualizado_em: new Date().toISOString(),
+      }
+      if (sessaoIdRef.current) {
+        await supabase
+          .from('sessoes_chat')
+          .update(payload)
+          .eq('id', sessaoIdRef.current)
+      } else {
+        const { data } = await supabase
+          .from('sessoes_chat')
+          .insert(payload)
+          .select('id')
+          .single()
+        if (data) sessaoIdRef.current = data.id
+      }
+    }
+    salvarSessao()
   }, [mensagens, historico])
 
   // ── Autenticação ──────────────────────────────────────────────────────────
@@ -456,7 +491,12 @@ export default function Home() {
       setMensagens([])
       setHistorico([])
       setRespostasAtivas({})
-      try { localStorage.removeItem('ofms_conversa') } catch (e) {}
+      if (sessaoIdRef.current) {
+        supabase
+          .from('sessoes_chat')
+          .update({ mensagens: [], historico: [], atualizado_em: new Date().toISOString() })
+          .eq('id', sessaoIdRef.current)
+      }
     }, 400)
   }
 
@@ -474,11 +514,16 @@ export default function Home() {
     enviar(msg)
   }
 
-  const novaConversa = () => {
+  const novaConversa = async () => {
     setMensagens([])
     setHistorico([])
     setRespostasAtivas({})
-    try { localStorage.removeItem('ofms_conversa') } catch (e) {}
+    if (sessaoIdRef.current) {
+      await supabase
+        .from('sessoes_chat')
+        .update({ mensagens: [], historico: [], atualizado_em: new Date().toISOString() })
+        .eq('id', sessaoIdRef.current)
+    }
   }
 
   const sair = async () => { await supabase.auth.signOut(); router.push('/login') }
