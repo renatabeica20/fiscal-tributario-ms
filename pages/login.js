@@ -52,7 +52,7 @@ export default function Login() {
       <div className={styles.card}>
         <div className={styles.logo}>§</div>
         <h1 className={styles.titulo}>Oráculo Fiscal MS</h1>
-        <p className={styles.subtitulo}>Secretaria de Estado de Fazenda — MS</p>
+        <p className={styles.subtitulo}>Especialista em legislação tributária do Estado de Mato Grosso do Sul</p>
 
         <form onSubmit={entrar} className={styles.form}>
           <label className={styles.label}>Email institucional</label>
@@ -84,7 +84,7 @@ export default function Login() {
         </form>
 
         <p className={styles.rodape}>
-          Acesso restrito a servidores autorizados da SEFAZ-MS
+          Acesso restrito. Ferramenta de apoio operacional.
         </p>
       </div>
     </div>
