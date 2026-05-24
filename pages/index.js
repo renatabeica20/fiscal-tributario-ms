@@ -262,7 +262,7 @@ export default function Home() {
         r.onload = () => res(r.result.split(',')[1])
         r.readAsDataURL(file)
       })
-      novas.push({ nome: file.name, base64, mediaType: tipo === 'application/pdf' ? 'image/jpeg' : tipo, tamanho: file.size })
+      novas.push({ nome: file.name, base64, mediaType: tipo, tamanho: file.size })
     }
     setImagens(prev => [...prev, ...novas].slice(0, MAX))
   }
