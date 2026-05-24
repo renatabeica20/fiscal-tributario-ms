@@ -76,9 +76,19 @@ function extrairAutuado(texto) {
 }
 
 function extrairFato(texto) {
-  // Extrai o número do fato/código de infração
-  const match = texto.match(/(?:fato|código|infração|art\.?)\s*(?:n[.º°]?\s*)?(\d{3,4})/i)
-  return match ? match[1] : null
+  // Tenta padrão "Fato XXX" ou "código XXX" ou "fato gerador XXX"
+  let match = texto.match(/fato\s+(?:gerador\s+)?n?[º°.]?\s*(\d{3,4})/i)
+  if (match) return match[1]
+  // Tenta "código XXX" ou "cód. XXX"
+  match = texto.match(/c[oó]d(?:igo)?\.?\s*(\d{3,4})/i)
+  if (match) return match[1]
+  // Tenta números de 3-4 dígitos que aparecem após "art." + depois "fato"
+  match = texto.match(/art\.?\s*\d+.*?fato\s+(\d{3,4})/is)
+  if (match) return match[1]
+  // Último recurso: qualquer número 3-4 dígitos entre 500-699 (range dos fatos MS)
+  match = texto.match(/([5-6]\d{2})/)
+  if (match) return match[1]
+  return null
 }
 
 function formatarTexto(txt) {
@@ -442,11 +452,8 @@ export default function Home() {
                         </div>
                         {doc.autuado && <p className={styles.painelAutuado}>{doc.autuado}</p>}
                         <div className={styles.painelAcoes}>
-                          <button className={styles.painelBtnUsar} onClick={() => setDocVisualizando(doc)}>
-                            👁 Ver
-                          </button>
-                          <button className={styles.painelBtnCopiar} onClick={() => navigator.clipboard.writeText(doc.materia_tributaria)}>
-                            📋 Copiar
+                          <button className={styles.painelBtnUsar} style={{fontSize:'0.78rem',padding:'6px 16px',width:'auto'}} onClick={() => setDocVisualizando(doc)}>
+                            👁 Ver documento
                           </button>
                         </div>
                       </div>
@@ -641,7 +648,7 @@ export default function Home() {
             value={input}
             onChange={e => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }}
             onKeyDown={tecla}
-            placeholder="Descreva o caso ou faça uma pergunta sobre a legislação tributária do MS..."
+            placeholder=""
             rows={1}
             spellCheck={true}
             lang="pt-BR"
