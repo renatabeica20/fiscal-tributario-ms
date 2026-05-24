@@ -696,6 +696,21 @@
 .btnAnexar:hover:not(:disabled) { border-color: #1a4a8a; background: #eef4fb; }
 .btnAnexar:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* Preenche safe area inferior com a cor do inputArea */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .app::after {
+    content: '';
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-bottom);
+    background: #ffffff;
+    z-index: 10;
+  }
+}
+
 /* ============ MOBILE ============ */
 @media (max-width: 768px) {
   .app {
