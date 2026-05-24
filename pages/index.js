@@ -365,10 +365,8 @@ export default function Home() {
     setDocVisualizando(null)
     setPainelHistorico(false)
     const msg = `Tenho uma situação semelhante ao documento anterior (${doc.tipo}${doc.infracao ? ' - ' + doc.infracao : ''}). Por favor, me ajude a adaptar a matéria tributária abaixo para o novo caso — precisarei apenas atualizar data, hora, local, partes envolvidas, mercadoria e valores:\n\n${doc.materia_tributaria}`
-    setInput(msg)
-    inputRef.current?.focus()
-    // Disparar automaticamente
-    setTimeout(() => enviar(msg), 100)
+    // Envia direto sem popular o campo de texto
+    enviar(msg)
   }
 
   const novaConversa = () => {
