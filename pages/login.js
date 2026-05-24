@@ -55,13 +55,13 @@ export default function Login() {
         <p className={styles.subtitulo}>Especialista em legislação tributária do Estado de Mato Grosso do Sul</p>
 
         <form onSubmit={entrar} className={styles.form}>
-          <label className={styles.label}>Email institucional</label>
+          <label className={styles.label}>Email de acesso</label>
           <input
             type="email"
             className={styles.input}
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder="fiscal@sefaz.ms.gov.br"
+            placeholder="seu@email.com"
             required
             autoFocus
           />
