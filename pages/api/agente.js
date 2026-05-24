@@ -453,19 +453,28 @@ REGRAS FINAIS INVIOLÁVEIS
   // ─── MONTAR MENSAGEM DO USUÁRIO (com ou sem imagens) ────────────────────
   let conteudoUsuario
   if (imagens && imagens.length > 0) {
-    // Mensagem multimodal: imagens + texto
+    // Mensagem multimodal: busca cada arquivo pela URL assinada e monta o conteúdo
     const partes = []
     for (const img of imagens) {
-      if (img.mediaType === 'application/pdf') {
-        partes.push({
-          type: 'document',
-          source: { type: 'base64', media_type: 'application/pdf', data: img.base64 }
-        })
-      } else {
-        partes.push({
-          type: 'image',
-          source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: img.base64 }
-        })
+      try {
+        const fileResp = await fetch(img.signedUrl)
+        if (!fileResp.ok) throw new Error(`Falha ao buscar arquivo: ${fileResp.status}`)
+        const arrayBuffer = await fileResp.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+        if (img.mediaType === 'application/pdf') {
+          partes.push({
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+          })
+        } else {
+          partes.push({
+            type: 'image',
+            source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: base64 }
+          })
+        }
+      } catch (e) {
+        console.error('Erro ao buscar arquivo do Storage:', e.message)
       }
     }
     if (mensagem && mensagem.trim()) {
