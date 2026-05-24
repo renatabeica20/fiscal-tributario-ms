@@ -293,11 +293,11 @@ export default function Home() {
       if (imagens.length >= MAX) { setAvisoLimite(true); break }
       if (imagens.length + novas.length >= MAX) break
       const tipo = file.type
-      if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'].includes(tipo)) continue
+      if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(tipo)) continue
 
-      // Comprimir imagens antes do upload (PDFs não são comprimidos)
-      const fileParaUpload = tipo !== 'application/pdf' ? await comprimirImagem(file) : file
-      const tipoFinal = tipo !== 'application/pdf' ? 'image/jpeg' : tipo
+      // Comprimir imagem antes do upload
+      const fileParaUpload = await comprimirImagem(file)
+      const tipoFinal = 'image/jpeg'
 
       // Upload direto para o Supabase Storage (evita limite 4.5MB do Vercel)
       const nomeArquivo = `${fiscal?.id || 'fiscal'}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
@@ -742,7 +742,7 @@ export default function Home() {
           </div>
         )}
         <div className={styles.inputWrapper}>
-          <input type="file" ref={fileRef} style={{ display: 'none' }} multiple accept="image/*,.pdf" onChange={e => handleFiles(e.target.files)} />
+          <input type="file" ref={fileRef} style={{ display: 'none' }} multiple accept="image/*" onChange={e => handleFiles(e.target.files)} />
           <button className={styles.btnAnexar} onClick={() => fileRef.current?.click()} title="Anexar documentos" disabled={imagens.length >= 8}>
             📎
           </button>
