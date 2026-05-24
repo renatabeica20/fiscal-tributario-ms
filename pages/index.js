@@ -509,8 +509,8 @@ export default function Home() {
         <div className={styles.painelOverlay} style={{justifyContent:"flex-start"}} onClick={() => setPainelHistorico(false)}>
           <div className={styles.painel} onClick={e => e.stopPropagation()}>
             <div className={styles.painelHeader}>
+              <button onClick={() => setPainelHistorico(false)} style={{background:'transparent',border:'none',color:'#fff',fontSize:'1.4rem',cursor:'pointer',padding:'8px 12px',minWidth:'44px',minHeight:'44px',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
               <h2 className={styles.painelTitulo}>📋 Histórico de Documentos</h2>
-              <button className={styles.painelFechar} onClick={() => setPainelHistorico(false)} style={{fontSize:'1.2rem', padding:'8px 14px', minWidth:'44px', minHeight:'44px'}}>✕</button>
             </div>
             {carregandoHistorico ? (
               <p className={styles.painelVazio}>Carregando...</p>
@@ -566,17 +566,6 @@ export default function Home() {
                 ))}
               </div>
             )}
-            {/* Botão voltar — visível apenas no mobile */}
-            <div style={{padding:'12px 16px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', borderTop:'1px solid #dde3ea', display:'flex'}}>
-              <button
-                onClick={() => setPainelHistorico(false)}
-                style={{
-                  width:'100%', padding:'14px', background:'#0d2f5e', color:'#fff',
-                  border:'none', borderRadius:'10px', fontSize:'1rem', fontWeight:700,
-                  cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px'
-                }}
-              >← Voltar ao Oráculo</button>
-            </div>
           </div>
         </div>
       )}
