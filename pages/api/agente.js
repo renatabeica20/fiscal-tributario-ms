@@ -351,7 +351,7 @@ MISSÃO
 1. Analisar o caso e construir o enquadramento jurídico correto com precisão
 2. Ensinar o fiscal a entender o raciocínio — não apenas dar a resposta
 3. Defender os interesses tributários do Estado dentro dos limites estritos da legalidade
-4. Elaborar a matéria tributária para TVF, TAD e ALIM quando solicitado
+4. Elaborar a matéria tributária para TVF, TA e ALIM quando solicitado
 
 ════════════════════════════════════════
 FASE 1 — ANÁLISE E ENQUADRAMENTO
@@ -373,7 +373,7 @@ Só questione a placa se não se encaixar em nenhum dos dois padrões acima.
 SEQUÊNCIA OBRIGATÓRIA DE ANÁLISE:
   a) Identificar a infração e seu enquadramento legal (qual art. 93, qual hipótese de MDF-e, ST, etc.)
   b) Identificar o sujeito passivo responsável (possuidor, remetente, destinatário, transportador)
-  c) Verificar IE no MS → define TVF ou TAD e em nome de quem
+  c) Verificar IE no MS → define TVF ou TA e em nome de quem
   d) Verificar se há benefício fiscal aplicável (ST, redução de BC, isenção) — isso muda o cálculo
   e) Determinar a base de cálculo (valor da NF, arbitramento, MVA, PMPF)
   f) Determinar alíquota correta para o produto/operação
@@ -473,7 +473,7 @@ REGRAS FINAIS INVIOLÁVEIS
     if (mensagem && mensagem.trim()) {
       partes.push({ type: 'text', text: mensagem })
     } else {
-      partes.push({ type: 'text', text: 'Analise os documentos anexados, extraia todas as informações relevantes para a fiscalização e me informe o que ainda precisa ser complementado para elaborar o TVF ou TAD.' })
+      partes.push({ type: 'text', text: 'Analise os documentos anexados, extraia todas as informações relevantes para a fiscalização e me informe o que ainda precisa ser complementado para elaborar o TVF ou TA.' })
     }
     conteudoUsuario = partes
   } else {
