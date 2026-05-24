@@ -57,9 +57,9 @@ Art. 46, I — Responsabilidade SOLIDÁRIA: transportador que transporte sem des
 Quando remetente e transportador são a mesma pessoa: responde em ambas as modalidades cumulativamente.
 TVF em nome do DESTINATÁRIO: quando o remetente não tem IE no MS e o destinatário é contribuinte inscrito e regular — art. 143, RICMS/MS.
 
-## TVF vs TAD
+## TVF vs TA
 TVF — REGRA GERAL: sujeito passivo (remetente OU destinatário) com IE ativa no MS. Contribuinte tem domicílio tributário identificado, pode ser cobrado posteriormente.
-TAD — EXCEÇÃO: sem IE no MS, clandestino, impossível identificar responsável, risco de perecimento ou desaparecimento da prova.
+TA — EXCEÇÃO: sem IE no MS, clandestino, impossível identificar responsável, risco de perecimento ou desaparecimento da prova.
 
 ## ALÍQUOTAS — ART. 41, LEI 1.810/97
 17% — operações internas e importações (art. 41, III, "a"). Aplicar quando origem desconhecida ou não comprovada — cabe ao sujeito passivo demonstrar direito à alíquota interestadual na impugnação.
