@@ -9,6 +9,30 @@ const ROTAS_PUBLICAS = ['/login']
 export default function App({ Component, pageProps }) {
   const router = useRouter()
   const [verificando, setVerificando] = useState(true)
+  const [atualizacaoPendente, setAtualizacaoPendente] = useState(false)
+
+  useEffect(() => {
+    const handleChunkError = (event) => {
+      const msg = event?.reason?.message || event?.message || ''
+      if (
+        msg.includes('Loading chunk') ||
+        msg.includes('ChunkLoadError') ||
+        msg.includes('Failed to fetch') ||
+        msg.includes('Unexpected token') ||
+        msg.includes('Loading CSS chunk')
+      ) {
+        setAtualizacaoPendente(true)
+      }
+    }
+
+    window.addEventListener('unhandledrejection', handleChunkError)
+    window.addEventListener('error', handleChunkError)
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleChunkError)
+      window.removeEventListener('error', handleChunkError)
+    }
+  }, [])
 
   useEffect(() => {
     const verificar = async () => {
@@ -60,6 +84,68 @@ export default function App({ Component, pageProps }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </Head>
+
+      {atualizacaoPendente && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 9999,
+          background: 'linear-gradient(135deg, #0d2f5e, #1a4a8a)',
+          borderBottom: '3px solid #e8a000',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🔄</span>
+            <div>
+              <p style={{
+                margin: 0,
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                letterSpacing: '0.02em'
+              }}>
+                Nova versão disponível
+              </p>
+              <p style={{
+                margin: 0,
+                color: '#a8c8e8',
+                fontSize: '0.72rem',
+                fontFamily: 'monospace'
+              }}>
+                Recarregue para aplicar as atualizações
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              background: '#e8a000',
+              color: '#0d2f5e',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 18px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap',
+              flexShrink: 0
+            }}
+          >
+            ATUALIZAR AGORA
+          </button>
+        </div>
+      )}
+
       <Component {...pageProps} />
     </>
   )
