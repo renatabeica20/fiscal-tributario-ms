@@ -151,6 +151,429 @@ function agruparPorData(docs) {
   return grupos
 }
 
+// ─── Componentes de formulário ───────────────────────────────────────────────
+
+const inputStyle = {
+  width: '100%', padding: '10px 14px',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(201,168,76,0.15)',
+  borderRadius: '8px', fontSize: '0.9rem',
+  color: '#c8c0b0', outline: 'none',
+  fontFamily: "'DM Sans', sans-serif",
+  boxSizing: 'border-box', transition: 'border-color 0.2s'
+}
+
+const labelStyle = {
+  fontFamily: "'DM Sans', sans-serif",
+  fontSize: '0.68rem', color: '#3a4a5a',
+  textTransform: 'uppercase', letterSpacing: '0.08em',
+  display: 'block', marginBottom: '5px'
+}
+
+const secaoStyle = {
+  background: 'rgba(255,255,255,0.02)',
+  border: '1px solid rgba(255,255,255,0.05)',
+  borderRadius: '10px', padding: '20px',
+  marginBottom: '16px'
+}
+
+const secaoTituloStyle = {
+  fontFamily: "'DM Sans', sans-serif",
+  fontSize: '0.7rem', color: '#c9a84c',
+  textTransform: 'uppercase', letterSpacing: '0.12em',
+  marginBottom: '16px', display: 'flex',
+  alignItems: 'center', gap: '8px'
+}
+
+function Campo({ label, children }) {
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function Grid({ cols = 2, children }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '12px' }}>
+      {children}
+    </div>
+  )
+}
+
+function BtnVoltar({ onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      background: 'none', border: 'none', color: '#c9a84c',
+      cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+      fontSize: '0.8rem', marginBottom: '20px',
+      display: 'flex', alignItems: 'center', gap: '6px'
+    }}>← Voltar</button>
+  )
+}
+
+const INCISOS = [
+  { value: 'confeccionada sem AIDF (art. 93, I)', label: 'I — Sem AIDF' },
+  { value: 'com fraude comprovada (art. 93, II)', label: 'II — Fraude comprovada' },
+  { value: 'com transmitente fictício (art. 93, III)', label: 'III — Transmitente fictício' },
+  { value: 'com destinatário diverso do real (art. 93, IV)', label: 'IV — Destinatário diverso' },
+  { value: 'emitida após cancelamento da IE (art. 93, V)', label: 'V — IE cancelada' },
+  { value: 'em inobservância das normas de controle (art. 93, VI)', label: 'VI — Inobservância de obrigação acessória' },
+  { value: 'fora do prazo de validade (art. 93, VII)', label: 'VII — Documento vencido' },
+]
+
+function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
+  const set = (campo) => (e) => setForm(f => ({ ...f, [campo]: e.target.value }))
+
+  const addMerc = () => setForm(f => ({ ...f, mercadoria: [...f.mercadoria, { descricao: '', quantidade: '', unidade: 'unidades', valor: '' }] }))
+  const removeMerc = (i) => setForm(f => ({ ...f, mercadoria: f.mercadoria.filter((_, idx) => idx !== i) }))
+  const setMerc = (i, campo, val) => setForm(f => {
+    const m = [...f.mercadoria]
+    m[i] = { ...m[i], [campo]: val }
+    return { ...f, mercadoria: m }
+  })
+
+  const obrigatoriosOk = form.data && form.hora && form.endereco && form.placa && form.motorista && form.sujeito && form.mercadoria[0]?.descricao
+
+  return (
+    <div style={{ maxWidth: '820px', margin: '0 auto', padding: '24px' }}>
+      <BtnVoltar onClick={onVoltar} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.4rem', color: '#c9a84c', fontWeight: 700 }}>
+          {tipo === 'TVF' ? '📋' : '🔒'} Gerar {tipo}
+        </div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: '#4a5a6a' }}>
+          {tipo === 'TVF' ? 'Termo de Verificação Fiscal' : 'Termo de Apreensão'}
+        </div>
+      </div>
+
+      {/* ABORDAGEM */}
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>📍 Abordagem</div>
+        <Grid cols={2}>
+          <Campo label="Data *">
+            <input type="date" style={inputStyle} value={form.data} onChange={set('data')} />
+          </Campo>
+          <Campo label="Hora *">
+            <input type="time" style={inputStyle} value={form.hora} onChange={set('hora')} />
+          </Campo>
+        </Grid>
+        <Campo label="Endereço completo *">
+          <input style={inputStyle} value={form.endereco} onChange={set('endereco')} placeholder="Rua, número, bairro" />
+        </Campo>
+        <Campo label="Cidade">
+          <input style={inputStyle} value={form.cidade} onChange={set('cidade')} />
+        </Campo>
+      </div>
+
+      {/* VEÍCULO E CONDUTOR */}
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>🚛 Veículo e condutor</div>
+        <Grid cols={3}>
+          <Campo label="Placa *">
+            <input style={inputStyle} value={form.placa} onChange={set('placa')} placeholder="ABC1D23" />
+          </Campo>
+          <Campo label="Nome do motorista *">
+            <input style={inputStyle} value={form.motorista} onChange={set('motorista')} placeholder="Nome completo" />
+          </Campo>
+          <Campo label="CPF do motorista">
+            <input style={inputStyle} value={form.cpf} onChange={set('cpf')} placeholder="000.000.000-00" />
+          </Campo>
+        </Grid>
+        <Campo label="Telefone">
+          <input style={inputStyle} value={form.telefone} onChange={set('telefone')} placeholder="(67) 99999-9999" />
+        </Campo>
+      </div>
+
+      {/* SUJEITO PASSIVO */}
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>🏢 Sujeito passivo</div>
+        <Campo label="Nome / Razão social *">
+          <input style={inputStyle} value={form.sujeito} onChange={set('sujeito')} placeholder="Nome ou razão social" />
+        </Campo>
+        <Grid cols={2}>
+          <Campo label="IE (Inscrição Estadual)">
+            <input style={inputStyle} value={form.ie} onChange={set('ie')} placeholder="Deixe vazio se não tiver" />
+          </Campo>
+          <Campo label="CNPJ / CPF">
+            <input style={inputStyle} value={form.cnpj} onChange={set('cnpj')} placeholder="CNPJ ou CPF" />
+          </Campo>
+        </Grid>
+        {tipo === 'TA' && (
+          <Campo label="Documentos apresentados">
+            <input style={inputStyle} value={form.documentos || ''} onChange={set('documentos')} placeholder="NF nº ..., CTe nº ..., MDFe nº ... (ou 'nenhum')" />
+          </Campo>
+        )}
+      </div>
+
+      {/* MERCADORIA */}
+      <div style={secaoStyle}>
+        <div style={{ ...secaoTituloStyle, justifyContent: 'space-between' }}>
+          <span>📦 Mercadoria</span>
+          <button onClick={addMerc} style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '6px', color: '#c9a84c', padding: '4px 12px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem' }}>
+            + Item
+          </button>
+        </div>
+        {form.mercadoria.map((m, i) => (
+          <div key={i} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#5a6a7a' }}>Item {i + 1}</span>
+              {form.mercadoria.length > 1 && (
+                <button onClick={() => removeMerc(i)} style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
+              )}
+            </div>
+            <Campo label="Descrição *">
+              <input style={inputStyle} value={m.descricao} onChange={e => setMerc(i, 'descricao', e.target.value)} placeholder="Ex: ovos extra branco, cartelas com 30 unidades" />
+            </Campo>
+            <Grid cols={3}>
+              <Campo label="Quantidade">
+                <input style={inputStyle} value={m.quantidade} onChange={e => setMerc(i, 'quantidade', e.target.value)} placeholder="Ex: 70" />
+              </Campo>
+              <Campo label="Unidade">
+                <input style={inputStyle} value={m.unidade} onChange={e => setMerc(i, 'unidade', e.target.value)} placeholder="caixas, kg, m², unidades..." />
+              </Campo>
+              <Campo label="Valor unitário (R$)">
+                <input style={inputStyle} value={m.valor} onChange={e => setMerc(i, 'valor', e.target.value)} placeholder="0,00" />
+              </Campo>
+            </Grid>
+          </div>
+        ))}
+      </div>
+
+      {/* INFRAÇÃO */}
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>⚖️ Infração</div>
+        <Campo label="Tipo de infração">
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {[
+              { value: 'sem_documento', label: 'Sem documentação fiscal' },
+              { value: 'inidonia', label: 'Documentação inidônea' }
+            ].map(op => (
+              <button key={op.value} onClick={() => setForm(f => ({ ...f, infracao: op.value }))}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem',
+                  background: form.infracao === op.value ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
+                  border: form.infracao === op.value ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                  color: form.infracao === op.value ? '#c9a84c' : '#5a6a7a'
+                }}>
+                {op.label}
+              </button>
+            ))}
+          </div>
+        </Campo>
+
+        {form.infracao === 'inidonia' && (
+          <Campo label="Motivo da inidoneidade (art. 93)">
+            <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.motivo_inidonia} onChange={set('motivo_inidonia')}>
+              <option value="">Selecione o inciso...</option>
+              {INCISOS.map(inc => <option key={inc.value} value={inc.value}>{inc.label}</option>)}
+            </select>
+          </Campo>
+        )}
+
+        {tipo === 'TA' && (
+          <Campo label="Responsável tributário">
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {[
+                { value: 'transportador', label: 'Transportador (art. 46, I)' },
+                { value: 'destinatario', label: 'Destinatário (art. 45, II)' }
+              ].map(op => (
+                <button key={op.value} onClick={() => setForm(f => ({ ...f, responsavel: op.value }))}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: '8px', cursor: 'pointer',
+                    fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem',
+                    background: form.responsavel === op.value ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: form.responsavel === op.value ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                    color: form.responsavel === op.value ? '#c9a84c' : '#5a6a7a'
+                  }}>
+                  {op.label}
+                </button>
+              ))}
+            </div>
+          </Campo>
+        )}
+
+        <Campo label="Observações adicionais">
+          <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={form.obs} onChange={set('obs')} placeholder="Detalhes relevantes da abordagem, declarações do motorista, registros fotográficos..." />
+        </Campo>
+      </div>
+
+      {/* BOTÃO GERAR */}
+      {!obrigatoriosOk && (
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: '#c87070', marginBottom: '12px' }}>
+          ⚠ Preencha os campos obrigatórios: data, hora, endereço, placa, motorista, sujeito passivo e mercadoria
+        </p>
+      )}
+
+      <button onClick={onGerar} disabled={!obrigatoriosOk} style={{
+        width: '100%', padding: '15px',
+        background: obrigatoriosOk ? 'linear-gradient(135deg, #b8902a, #c9a84c)' : 'rgba(255,255,255,0.05)',
+        color: obrigatoriosOk ? '#0d0f12' : '#3a4a5a',
+        border: 'none', borderRadius: '10px',
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: '0.92rem', fontWeight: 700,
+        cursor: obrigatoriosOk ? 'pointer' : 'not-allowed',
+        letterSpacing: '0.06em', textTransform: 'uppercase',
+        boxShadow: obrigatoriosOk ? '0 8px 24px rgba(180,140,40,0.25)' : 'none',
+        transition: 'all 0.2s'
+      }}>
+        ✓ Gerar matéria tributária
+      </button>
+    </div>
+  )
+}
+
+function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
+  const set = (campo) => (e) => setForm(f => ({ ...f, [campo]: e.target.value }))
+  const obrigatoriosOk = form.numero_doc && form.contribuinte && form.texto_contribuinte
+
+  return (
+    <div style={{ maxWidth: '820px', margin: '0 auto', padding: '24px' }}>
+      <BtnVoltar onClick={onVoltar} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.4rem', color: '#c9a84c', fontWeight: 700 }}>
+          ⚖️ Contestação / DESK
+        </div>
+      </div>
+
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>Tipo de documento</div>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+          {[
+            { value: 'contestacao', label: '⚖️ Contestação de ALIM' },
+            { value: 'desk', label: '📩 Resposta a DESK' }
+          ].map(op => (
+            <button key={op.value} onClick={() => setForm(f => ({ ...f, tipo: op.value }))}
+              style={{
+                flex: 1, padding: '12px', borderRadius: '8px', cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif", fontSize: '0.85rem',
+                background: form.tipo === op.value ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
+                border: form.tipo === op.value ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                color: form.tipo === op.value ? '#c9a84c' : '#5a6a7a'
+              }}>
+              {op.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>📄 Identificação</div>
+        <Campo label={form.tipo === 'contestacao' ? 'Número do ALIM *' : 'Número do TVF/TA *'}>
+          <input style={inputStyle} value={form.numero_doc} onChange={set('numero_doc')} placeholder={form.tipo === 'contestacao' ? 'Ex: 11.592-M' : 'Ex: 001024099'} />
+        </Campo>
+        <Campo label="Contribuinte / Razão social *">
+          <input style={inputStyle} value={form.contribuinte} onChange={set('contribuinte')} placeholder="Nome ou razão social" />
+        </Campo>
+        <Grid cols={2}>
+          <Campo label="IE">
+            <input style={inputStyle} value={form.ie_contrib} onChange={set('ie_contrib')} placeholder="Inscrição estadual" />
+          </Campo>
+          <Campo label="CNPJ">
+            <input style={inputStyle} value={form.cnpj_contrib} onChange={set('cnpj_contrib')} placeholder="CNPJ" />
+          </Campo>
+        </Grid>
+      </div>
+
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>📝 Texto do contribuinte</div>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#4a5a6a', marginBottom: '12px' }}>
+          Cole aqui o texto da impugnação ou reclamação do contribuinte. O Oráculo vai gerar a resposta em defesa do fisco, rebatendo os argumentos ponto a ponto.
+        </p>
+        <textarea
+          style={{ ...inputStyle, minHeight: '200px', resize: 'vertical' }}
+          value={form.texto_contribuinte}
+          onChange={set('texto_contribuinte')}
+          placeholder="Cole aqui o texto da impugnação ou DESK do contribuinte..."
+        />
+      </div>
+
+      {!obrigatoriosOk && (
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: '#c87070', marginBottom: '12px' }}>
+          ⚠ Preencha o número do documento, contribuinte e o texto da impugnação
+        </p>
+      )}
+
+      <button onClick={onGerar} disabled={!obrigatoriosOk} style={{
+        width: '100%', padding: '15px',
+        background: obrigatoriosOk ? 'linear-gradient(135deg, #b8902a, #c9a84c)' : 'rgba(255,255,255,0.05)',
+        color: obrigatoriosOk ? '#0d0f12' : '#3a4a5a',
+        border: 'none', borderRadius: '10px',
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: '0.92rem', fontWeight: 700,
+        cursor: obrigatoriosOk ? 'pointer' : 'not-allowed',
+        letterSpacing: '0.06em', textTransform: 'uppercase',
+        boxShadow: obrigatoriosOk ? '0 8px 24px rgba(180,140,40,0.25)' : 'none',
+        transition: 'all 0.2s'
+      }}>
+        ✓ Gerar resposta
+      </button>
+    </div>
+  )
+}
+
+// ─── Monta mensagem estruturada para o agente ────────────────────────────────
+
+function montarMensagemTVF(form) {
+  const mercs = form.mercadoria.map(m =>
+    `${m.quantidade} ${m.unidade} de ${m.descricao}${m.valor ? ` avaliado(s) em R$ ${m.valor} cada` : ''}`
+  ).join('; ')
+
+  const infracao = form.infracao === 'sem_documento'
+    ? 'mercadoria desacompanhada de documentação fiscal'
+    : `documentação fiscal inidônea — ${form.motivo_inidonia}`
+
+  return `GERAR TVF com os seguintes dados:
+Data: ${form.data}
+Hora: ${form.hora}
+Local: ${form.endereco}, ${form.cidade}/MS
+Placa: ${form.placa}
+Motorista: ${form.motorista}${form.cpf ? ` — CPF: ${form.cpf}` : ''}${form.telefone ? ` — Tel: ${form.telefone}` : ''}
+Sujeito passivo: ${form.sujeito}${form.ie ? ` — IE: ${form.ie}` : ' — sem IE no MS'}${form.cnpj ? ` — CNPJ: ${form.cnpj}` : ''}
+Mercadoria: ${mercs}
+Infração: ${infracao}${form.obs ? `
+Observações: ${form.obs}` : ''}`
+}
+
+function montarMensagemTA(form) {
+  const mercs = form.mercadoria.map(m =>
+    `${m.quantidade} ${m.unidade} de ${m.descricao}${m.valor ? ` — R$ ${m.valor} cada` : ''}`
+  ).join('; ')
+
+  const infracao = form.infracao === 'sem_documento'
+    ? 'mercadoria desacompanhada de documentação fiscal'
+    : `documentação fiscal inidônea — ${form.motivo_inidonia}`
+
+  return `GERAR TA com os seguintes dados:
+Data: ${form.data}
+Hora: ${form.hora}
+Local: ${form.endereco}, ${form.cidade}/MS
+Placa: ${form.placa}
+Motorista: ${form.motorista}${form.cpf ? ` — CPF: ${form.cpf}` : ''}${form.telefone ? ` — Tel: ${form.telefone}` : ''}
+Sujeito passivo: ${form.sujeito}${form.ie ? ` — IE: ${form.ie}` : ' — sem IE no MS'}${form.cnpj ? ` — CNPJ: ${form.cnpj}` : ''}
+Documentos apresentados: ${form.documentos || 'nenhum'}
+Mercadoria: ${mercs}
+Infração: ${infracao}
+Responsável tributário: ${form.responsavel}${form.obs ? `
+Observações: ${form.obs}` : ''}`
+}
+
+function montarMensagemContestacao(form) {
+  const tipo = form.tipo === 'contestacao' ? 'CONTESTAÇÃO DE IMPUGNAÇÃO (ALIM)' : 'RESPOSTA A DESK'
+  return `GERAR ${tipo}
+Número do documento: ${form.numero_doc}
+Contribuinte: ${form.contribuinte}${form.ie_contrib ? ` — IE: ${form.ie_contrib}` : ''}${form.cnpj_contrib ? ` — CNPJ: ${form.cnpj_contrib}` : ''}
+
+TEXTO DO CONTRIBUINTE (impugnação/reclamação):
+${form.texto_contribuinte}
+
+Gere a resposta em defesa do fisco, rebatendo os argumentos ponto a ponto com base na legislação tributária do MS.`
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function Home() {
   const router = useRouter()
@@ -168,6 +591,33 @@ export default function Home() {
   const [confirmarExclusao, setConfirmarExclusao] = useState(null) // doc a excluir
   const [labelSalvar, setLabelSalvar] = useState('')
   const [tipoEscolhido, setTipoEscolhido] = useState('')
+  const [modoAtivo, setModoAtivo] = useState(null) // null | 'consulta' | 'tvf' | 'ta' | 'contestacao'
+  const [formTVF, setFormTVF] = useState({
+    data: '', hora: '', endereco: '', cidade: 'Campo Grande',
+    placa: '', motorista: '', cpf: '', telefone: '',
+    sujeito: '', ie: '', cnpj: '',
+    mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }],
+    infracao: 'sem_documento',
+    motivo_inidonia: '',
+    obs: ''
+  })
+  const [formTA, setFormTA] = useState({
+    data: '', hora: '', endereco: '', cidade: 'Campo Grande',
+    placa: '', motorista: '', cpf: '', telefone: '',
+    sujeito: '', ie: '', cnpj: '',
+    documentos: '',
+    mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }],
+    infracao: 'sem_documento',
+    motivo_inidonia: '',
+    responsavel: 'transportador',
+    obs: ''
+  })
+  const [formContestacao, setFormContestacao] = useState({
+    tipo: 'contestacao',
+    numero_doc: '',
+    contribuinte: '', ie_contrib: '', cnpj_contrib: '',
+    texto_contribuinte: ''
+  })
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [datasExpandidas, setDatasExpandidas] = useState({})
@@ -491,11 +941,11 @@ export default function Home() {
     const eMateria = inicio !== -1 && fim !== -1
     const textoCopiar = eMateria ? texto.substring(inicio + 20, fim).trim() : texto
     if (eMateria) {
-      const tipoSugerido = detectarTipoDocumento(texto) || ''
+      // Pré-preencher com tipo + autuado detectados
+      const tipoDoc = detectarTipoDocumento(texto) || ''
       const autuadoDoc = extrairAutuado(textoCopiar) || ''
-      setTipoEscolhido(tipoSugerido) // sugestão do agente, fiscal pode mudar
-      setLabelSalvar('')
-      setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido })
+      setLabelSalvar(tipoDoc ? `${tipoDoc} - ` : '')
+      setPopupSalvar({ textoCopiar, autuado: autuadoDoc })
     } else {
       navigator.clipboard.writeText(textoCopiar)
     }
@@ -513,7 +963,7 @@ export default function Home() {
     }
     // Salvar no banco com label do fiscal
     if (fiscal) {
-      const tipo = tipoEscolhido || 'TVF'
+      const tipo = detectarTipoDocumento(textoCopiar) || 'TVF'
       await supabase.from('historico_documentos').upsert({
         fiscal_id: fiscal.id,
         tipo,
@@ -557,6 +1007,7 @@ export default function Home() {
     setMensagens([])
     setHistorico([])
     setRespostasAtivas({})
+    setModoAtivo(null)
     if (sessaoIdRef.current) {
       await supabase
         .from('sessoes_chat')
@@ -747,13 +1198,118 @@ export default function Home() {
 
       {/* CHAT */}
       <div className={styles.chat} ref={chatRef}>
-        {mensagens.length === 0 && (
-          <div className={styles.welcome}>
-            <h2>Oráculo Fiscal MS</h2>
-            <p>Especialista em legislação tributária do Estado de Mato Grosso do Sul.<br />
-            Análise de casos, enquadramento legal e elaboração de documentos fiscais.<br />
-            <span style={{ fontSize: '0.8rem', color: '#90a4ae' }}>Você pode anexar fotos de documentos, NFs, CNH e CRLV usando o ícone 📎.</span></p>
+        {mensagens.length === 0 && !modoAtivo && (
+          <div style={{ maxWidth: '820px', margin: '32px auto', padding: '0 24px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.6rem', color: '#c9a84c', fontWeight: 700, marginBottom: '8px' }}>
+                Oráculo Fiscal MS
+              </h2>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', color: '#4a5a6a', letterSpacing: '0.04em' }}>
+                Selecione o que deseja fazer
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+              {[
+                { id: 'consulta', icone: '🔍', titulo: 'Consultar legislação', desc: 'Tire dúvidas sobre a legislação tributária estadual, enquadramentos e procedimentos', cor: '#3a6aaa' },
+                { id: 'tvf', icone: '📋', titulo: 'Gerar TVF', desc: 'Termo de Verificação Fiscal — sujeito passivo com IE ativa no MS', cor: '#c9a84c' },
+                { id: 'ta', icone: '🔒', titulo: 'Gerar TA', desc: 'Termo de Apreensão — sem IE no MS, clandestino ou risco de desaparecimento', cor: '#c87050' },
+                { id: 'contestacao', icone: '⚖️', titulo: 'Contestação / DESK', desc: 'Resposta a impugnação de ALIM ou reclamação de contribuinte via DESK', cor: '#6a9a6a' },
+              ].map(modo => (
+                <button
+                  key={modo.id}
+                  onClick={() => {
+                    if (modo.id === 'consulta') {
+                      setModoAtivo('consulta')
+                    } else {
+                      setModoAtivo(modo.id)
+                    }
+                  }}
+                  style={{
+                    background: 'linear-gradient(180deg, #0e1620 0%, #0a1018 100%)',
+                    border: `1px solid rgba(255,255,255,0.06)`,
+                    borderTop: `3px solid ${modo.cor}`,
+                    borderRadius: '12px',
+                    padding: '24px 20px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = modo.cor; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderTopColor = modo.cor; e.currentTarget.style.transform = 'translateY(0)' }}
+                >
+                  <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>{modo.icone}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.1rem', color: '#c8c0b0', fontWeight: 700, marginBottom: '8px' }}>
+                    {modo.titulo}
+                  </div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#4a5a6a', lineHeight: 1.6 }}>
+                    {modo.desc}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <p style={{ textAlign: 'center', marginTop: '20px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: '#2a3a4a' }}>
+              📎 Você pode anexar fotos de documentos, NFs, CNH e CRLV em qualquer modo
+            </p>
           </div>
+        )}
+
+        {/* MODO CONSULTA — ativa chat direto */}
+        {mensagens.length === 0 && modoAtivo === 'consulta' && (
+          <div style={{ maxWidth: '820px', margin: '24px auto', padding: '0 24px' }}>
+            <button onClick={() => setModoAtivo(null)} style={{ background: 'none', border: 'none', color: '#c9a84c', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.8rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              ← Voltar
+            </button>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.88rem', color: '#5a6a7a', textAlign: 'center', marginTop: '40px' }}>
+              💬 Digite sua dúvida abaixo — legislação, enquadramento, procedimento.
+            </div>
+          </div>
+        )}
+
+        {/* FORMULÁRIO TVF */}
+        {mensagens.length === 0 && modoAtivo === 'tvf' && (
+          <FormularioDocumento
+            tipo="TVF"
+            form={formTVF}
+            setForm={setFormTVF}
+            onVoltar={() => setModoAtivo(null)}
+            onGerar={() => {
+              const msg = montarMensagemTVF(formTVF)
+              setModoAtivo('consulta')
+              enviar(msg)
+            }}
+          />
+        )}
+
+        {/* FORMULÁRIO TA */}
+        {mensagens.length === 0 && modoAtivo === 'ta' && (
+          <FormularioDocumento
+            tipo="TA"
+            form={formTA}
+            setForm={setFormTA}
+            onVoltar={() => setModoAtivo(null)}
+            onGerar={() => {
+              const msg = montarMensagemTA(formTA)
+              setModoAtivo('consulta')
+              enviar(msg)
+            }}
+          />
+        )}
+
+        {/* FORMULÁRIO CONTESTAÇÃO/DESK */}
+        {mensagens.length === 0 && modoAtivo === 'contestacao' && (
+          <FormularioContestacao
+            form={formContestacao}
+            setForm={setFormContestacao}
+            onVoltar={() => setModoAtivo(null)}
+            onGerar={() => {
+              const msg = montarMensagemContestacao(formContestacao)
+              setModoAtivo('consulta')
+              enviar(msg)
+            }}
+          />
         )}
 
         {mensagens.map((msg, msgIdx) => (
@@ -808,8 +1364,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* ÁREA DE INPUT */}
-      <div className={styles.inputArea}>
+      {/* ÁREA DE INPUT — oculto nos formulários */}
+      <div className={styles.inputArea} style={{ display: modoAtivo && modoAtivo !== 'consulta' && mensagens.length === 0 ? 'none' : undefined }}>
         {imagens.length > 0 && (
           <div className={styles.imagensPreview}>
             {imagens.map((img, i) => (
@@ -855,99 +1411,51 @@ export default function Home() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }} onClick={() => setPopupSalvar(null)}>
           <div style={{
-            background: '#0e1620', borderRadius: '16px', padding: '32px 28px',
-            maxWidth: '440px', width: '100%', textAlign: 'center',
-            boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
-            border: '1px solid rgba(201,168,76,0.2)',
-            borderTop: '3px solid #c9a84c'
+            background: '#fff', borderRadius: '16px', padding: '32px 28px',
+            maxWidth: '420px', width: '100%', textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(6,26,54,0.4)', borderTop: '4px solid #e8a000'
           }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💾</div>
-            <h3 style={{ color: '#c9a84c', fontFamily: "'Cormorant Garamond', serif", fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
-              Salvar documento
+            <h3 style={{ color: '#0d2f5e', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>
+              Salvar e copiar documento
             </h3>
-
-            {/* Seleção obrigatória do tipo pelo fiscal */}
-            <p style={{ color: '#7a8a9a', fontSize: '0.8rem', marginBottom: '14px', lineHeight: 1.5 }}>
-              Selecione o tipo de documento:
-              {popupSalvar?.tipoSugerido && (
-                <span style={{ display: 'block', fontSize: '0.72rem', color: '#c9a84c', marginTop: '4px' }}>
-                  ⚡ Agente sugeriu: {popupSalvar.tipoSugerido}
-                </span>
-              )}
-            </p>
-
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'center' }}>
-              {['TVF', 'TA', 'ALIM'].map(tipo => (
-                <button
-                  key={tipo}
-                  onClick={() => setTipoEscolhido(tipo)}
-                  style={{
-                    flex: 1, padding: '12px 8px',
-                    borderRadius: '8px', cursor: 'pointer',
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: '0.88rem', fontWeight: 700,
-                    transition: 'all 0.2s',
-                    background: tipoEscolhido === tipo ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.04)',
-                    border: tipoEscolhido === tipo ? '2px solid #c9a84c' : '1px solid rgba(255,255,255,0.1)',
-                    color: tipoEscolhido === tipo ? '#c9a84c' : '#5a6a7a',
-                    boxShadow: tipoEscolhido === tipo ? '0 0 12px rgba(201,168,76,0.2)' : 'none'
-                  }}
-                >
-                  {tipo}
-                </button>
-              ))}
-            </div>
-
-            <p style={{ color: '#7a8a9a', fontSize: '0.78rem', marginBottom: '10px' }}>
-              Identificação no histórico (opcional):
+            <p style={{ color: '#546e7a', fontSize: '0.82rem', marginBottom: '20px', lineHeight: 1.5 }}>
+              Como quer identificar este documento no histórico?<br/>
+              <span style={{ fontSize: '0.75rem', color: '#90a4ae' }}>Ex: TVF - Fato 593, TA - Mercadoria sem NF</span>
             </p>
             <input
               type="text"
               value={labelSalvar}
               onChange={e => setLabelSalvar(e.target.value)}
-              placeholder="Ex: Fato 593 - Bebidas sem NF"
+              placeholder="Ex: TVF - Fato 593"
               autoFocus
               style={{
-                width: '100%', padding: '11px 14px',
-                border: '1px solid rgba(201,168,76,0.2)',
-                borderRadius: '9px', fontSize: '0.9rem', color: '#c8c0b0',
-                background: 'rgba(255,255,255,0.04)',
+                width: '100%', padding: '11px 14px', border: '2px solid #b0c4de',
+                borderRadius: '9px', fontSize: '0.92rem', color: '#0d2f5e',
                 outline: 'none', boxSizing: 'border-box', marginBottom: '20px',
-                fontFamily: "'DM Sans', sans-serif"
+                fontFamily: 'inherit', transition: 'border-color 0.2s'
               }}
+              onFocus={e => e.target.style.borderColor = '#1a4a8a'}
+              onBlur={e => e.target.style.borderColor = '#b0c4de'}
               onKeyDown={e => { if (e.key === 'Enter') confirmarSalvar() }}
             />
-
-            {!tipoEscolhido && (
-              <p style={{ color: '#c87070', fontSize: '0.75rem', marginBottom: '12px' }}>
-                ⚠ Selecione TVF ou TA antes de salvar
-              </p>
-            )}
-
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 onClick={confirmarSalvar}
-                disabled={!tipoEscolhido}
                 style={{
-                  flex: 1,
-                  background: tipoEscolhido ? 'linear-gradient(135deg, #b8902a, #c9a84c)' : 'rgba(255,255,255,0.05)',
-                  color: tipoEscolhido ? '#0d0f12' : '#3a4a5a',
-                  border: 'none', borderRadius: '9px', padding: '13px',
-                  fontSize: '0.88rem', fontWeight: 700,
-                  cursor: tipoEscolhido ? 'pointer' : 'not-allowed',
-                  fontFamily: "'DM Sans', sans-serif",
-                  transition: 'all 0.2s'
+                  flex: 1, background: 'linear-gradient(135deg, #1a4a8a, #0d2f5e)',
+                  color: '#fff', border: 'none', borderRadius: '9px', padding: '12px',
+                  fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer'
                 }}
               >
                 ✓ Salvar e copiar
               </button>
               <button
-                onClick={() => { setPopupSalvar(null); setTipoEscolhido('') }}
+                onClick={() => setPopupSalvar(null)}
                 style={{
-                  background: 'rgba(255,255,255,0.04)', color: '#5a6a7a',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '9px', padding: '13px 16px', fontSize: '0.85rem',
-                  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif"
+                  background: '#f0f4f8', color: '#546e7a', border: '1px solid #c3d0e0',
+                  borderRadius: '9px', padding: '12px 16px', fontSize: '0.85rem',
+                  cursor: 'pointer'
                 }}
               >
                 Cancelar
