@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
   // Verifica se fiscal está ativo e aprovado
   const { data: perfil } = await supabaseAdmin
-    .from('perfis').select('ativo, status').eq('id', user.id).single()
+    .from('perfis').select('ativo, status, nome').eq('id', user.id).single()
   if (!perfil?.ativo || perfil?.status !== 'aprovado') {
     return res.status(403).json({ error: 'Acesso não autorizado' })
   }
@@ -588,16 +588,23 @@ REGRAS FINAIS INVIOLÁVEIS
 
     const antData = await antResp.json()
 
+    // Registra uso no banco
+    const tokensEntrada = antData.usage?.input_tokens || 0
+    const tokensSaida = antData.usage?.output_tokens || 0
+    // Preço claude-sonnet-4-6: $3/M input, $15/M output
+    const custoEstimado = (tokensEntrada * 0.000003) + (tokensSaida * 0.000015)
+
+    supabaseAdmin.from('logs_uso').insert({
+      fiscal_id: user.id,
+      fiscal_nome: perfil?.nome || user.email,
+      tokens_entrada: tokensEntrada,
+      tokens_saida: tokensSaida,
+      custo_estimado: custoEstimado
+    }).then(() => {}).catch(() => {}) // fire-and-forget, não bloqueia resposta
+
     return res.status(200).json({
       resposta: antData.content[0].text,
-      // Metadados úteis para debug — remova em produção se quiser
-      _debug: {
-        ragStatus,
-        modelo: 'claude-sonnet-4-6',
-        inputTokens: antData.usage?.input_tokens,
-        outputTokens: antData.usage?.output_tokens,
-        historicoTurnos: historicoTratado.length / 2
-      }
+      trechosConsultados: ragStatus === 'ok' ? RAG_MATCH_COUNT : 0
     })
 
   } catch (err) {
