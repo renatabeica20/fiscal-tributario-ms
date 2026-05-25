@@ -268,21 +268,6 @@ export default function Admin() {
               )}
             </div>
 
-            {/* Opção limpar */}
-            {arquivos.length > 0 && (
-              <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  id="limpar"
-                  checked={limparAntes}
-                  onChange={e => setLimparAntes(e.target.checked)}
-                />
-                <label htmlFor="limpar" className={styles.label} style={{ margin: 0 }}>
-                  Apagar indexação anterior destes documentos antes de reinserir
-                </label>
-              </div>
-            )}
-
             {/* Lista de arquivos selecionados */}
             {arquivos.length > 0 && (
               <div style={{ margin: '1rem 0', maxHeight: '200px', overflowY: 'auto' }}>
@@ -304,6 +289,49 @@ export default function Admin() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Opção limpar */}
+            {arquivos.length > 0 && (
+              <div
+                onClick={() => setLimparAntes(v => !v)}
+                style={{
+                  margin: '1rem 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  background: limparAntes ? 'rgba(232,160,0,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: limparAntes ? '1px solid rgba(232,160,0,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <div style={{
+                  width: '20px', height: '20px', flexShrink: 0,
+                  borderRadius: '4px',
+                  border: limparAntes ? '2px solid #e8a000' : '2px solid rgba(255,255,255,0.3)',
+                  background: limparAntes ? '#e8a000' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}>
+                  {limparAntes && (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="#0d2f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: limparAntes ? '#e8a000' : '#ffffff' }}>
+                    Apagar indexação anterior antes de reinserir
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#a8c8e8', marginTop: '2px' }}>
+                    Recomendado ao atualizar documentos já indexados
+                  </p>
+                </div>
               </div>
             )}
 
