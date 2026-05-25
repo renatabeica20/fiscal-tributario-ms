@@ -1537,9 +1537,8 @@ export default function Home() {
             <p style={{ textAlign: 'center', marginTop: '20px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: '#2a3a4a' }}>
               📎 Você pode anexar fotos de documentos, NFs, CNH e CRLV em qualquer modo
             </p>
-          </div>
 
-          {/* Overlay de boas-vindas */}
+            {/* Overlay de boas-vindas */}
           {!bannerFechado && (
             <div style={{
               position: 'absolute', inset: 0, zIndex: 10,
@@ -1636,6 +1635,7 @@ export default function Home() {
               </div>
             </div>
           )}
+        </div>
         )}
 
         {/* MODO CONSULTA — ativa chat direto */}
