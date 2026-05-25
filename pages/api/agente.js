@@ -212,93 +212,125 @@ Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributa
    - Parcialmente tributada → terceiro código (ex: 580, 583, 586...)
 `
 
-  // ─── RAG — busca vetorial no Supabase ────────────────────────────────────
+  // ─── RAG — busca híbrida (vetorial + textual) ────────────────────────────
   let contextoRAG = ''
-  let ragStatus   = 'desabilitado' // para log e feedback ao modelo
+  let ragStatus   = 'desabilitado'
+
+  // Extrai termos de busca textual da mensagem (artigos, parágrafos, palavras-chave)
+  function extrairTermosBusca(texto) {
+    if (!texto) return []
+    const termos = []
+    // Artigos: "art. 41", "artigo 93", "art 117"
+    const artigoMatches = texto.match(/art(?:igo)?\.?\s*\d+[\w-]*/gi) || []
+    termos.push(...artigoMatches)
+    // Parágrafos: "§2º", "§ 1"
+    const paraMatches = texto.match(/§\s*\d+[ºª°]?/g) || []
+    termos.push(...paraMatches)
+    // Palavras relevantes longas (mais de 5 chars, exceto stopwords)
+    const stopwords = new Set(['como','para','quando','sobre','quais','qual','que','não','sim','uma','uns'])
+    const palavras = texto.toLowerCase().split(/\s+/)
+      .filter(p => p.length > 5 && !stopwords.has(p))
+      .slice(0, 5)
+    termos.push(...palavras)
+    return [...new Set(termos)].slice(0, 8)
+  }
 
   if (OPENAI_KEY && SUPABASE_URL && SUPABASE_KEY) {
     try {
-      // 1. Gerar embedding da mensagem do usuário
+      const textoConsulta = mensagem || 'análise de documentos fiscais'
+
+      // ── 1. BUSCA VETORIAL (por similaridade semântica) ──────────────────
       const embResp = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'text-embedding-3-small',
-          input: (mensagem || 'análise de documentos fiscais').substring(0, 8000)
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+        body: JSON.stringify({ model: 'text-embedding-3-small', input: textoConsulta.substring(0, 8000) })
       })
 
-      if (!embResp.ok) {
-        const embErr = await embResp.json()
-        throw new Error(`OpenAI embedding falhou: ${embErr.error?.message || embResp.status}`)
-      }
+      let trechosVetoriais = []
+      if (embResp.ok) {
+        const embData = await embResp.json()
+        const embedding = embData.data[0].embedding
 
-      const embData = await embResp.json()
-      const embedding = embData.data[0].embedding
-
-      // 2. Buscar no Supabase com match_count generoso para filtrar depois
-      const sbResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/buscar_legislacao`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
-        body: JSON.stringify({
-          query_embedding: embedding,
-          match_count: RAG_MATCH_COUNT
+        const sbResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/buscar_legislacao`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify({ query_embedding: embedding, match_count: RAG_MATCH_COUNT })
         })
-      })
 
-      if (!sbResp.ok) {
-        const sbErr = await sbResp.text()
-        throw new Error(`Supabase RPC falhou: ${sbResp.status} — ${sbErr}`)
-      }
-
-      const trechos = await sbResp.json()
-
-      if (!Array.isArray(trechos) || trechos.length === 0) {
-        ragStatus = 'sem_resultados'
-      } else {
-        // 3. Filtrar por threshold de similaridade
-        let trechosFiltrados = trechos.filter(t => t.similarity >= RAG_THRESHOLD)
-
-        // Se poucos passaram no threshold, aceita os melhores disponíveis
-        if (trechosFiltrados.length < RAG_MIN_RESULTS) {
-          trechosFiltrados = trechos
-            .sort((a, b) => b.similarity - a.similarity)
-            .slice(0, RAG_MIN_RESULTS)
+        if (sbResp.ok) {
+          const todos = await sbResp.json()
+          if (Array.isArray(todos) && todos.length > 0) {
+            trechosVetoriais = todos.filter(t => t.similarity >= RAG_THRESHOLD)
+            if (trechosVetoriais.length < RAG_MIN_RESULTS) {
+              trechosVetoriais = todos.sort((a, b) => b.similarity - a.similarity).slice(0, RAG_MIN_RESULTS)
+            }
+          }
         }
+      }
 
-        // 4. Ordenar por relevância e montar contexto com score visível ao modelo
-        trechosFiltrados.sort((a, b) => b.similarity - a.similarity)
+      // ── 2. BUSCA TEXTUAL (por artigo/palavra-chave exata) ───────────────
+      let trechosTextuais = []
+      const termos = extrairTermosBusca(textoConsulta)
 
-        contextoRAG = '\n\n## LEGISLAÇÃO RECUPERADA DA BASE VETORIAL\n'
-          + '(Use estes trechos como fonte primária. Cite apenas o que estiver aqui ou na BASE_LEI acima.)\n\n'
-          + trechosFiltrados.map((t, i) => {
-              const score = (t.similarity * 100).toFixed(1)
-              return `[TRECHO ${i + 1} — ${t.nome_documento} — relevância ${score}%]\n${t.trecho}`
+      if (termos.length > 0) {
+        const textResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/buscar_legislacao_texto`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify({ termos, max_results: 10 })
+        })
+        if (textResp.ok) {
+          const textData = await textResp.json()
+          if (Array.isArray(textData)) {
+            trechosTextuais = textData.map(t => ({ ...t, similarity: 0.85, fonte: 'textual' }))
+          }
+        }
+      }
+
+      // ── 3. COMBINAR E DEDUPLICAR ────────────────────────────────────────
+      const vistos = new Set()
+      const trechosCombinados = []
+
+      // Textuais primeiro — são mais precisos para artigos específicos
+      for (const t of trechosTextuais) {
+        const chave = t.trecho?.substring(0, 80)
+        if (chave && !vistos.has(chave)) {
+          vistos.add(chave)
+          trechosCombinados.push({ ...t, fonte: 'textual' })
+        }
+      }
+      // Depois os vetoriais
+      for (const t of trechosVetoriais) {
+        const chave = t.trecho?.substring(0, 80)
+        if (chave && !vistos.has(chave)) {
+          vistos.add(chave)
+          trechosCombinados.push({ ...t, fonte: 'vetorial' })
+        }
+      }
+
+      if (trechosCombinados.length === 0) {
+        ragStatus = 'sem_resultados'
+        contextoRAG = `\n\n## ⚠️ AVISO INTERNO — NENHUM TRECHO ENCONTRADO NA BASE\n`
+          + `A busca híbrida (vetorial + textual) não retornou resultados para esta consulta. `
+          + `Informe ao fiscal: "Não encontrei esse dispositivo na base indexada. Consulte o PDF da legislação para confirmação."`
+      } else {
+        ragStatus = `ok:${trechosCombinados.length}_trechos(${trechosTextuais.length}txt+${trechosVetoriais.length}vec)`
+        contextoRAG = '\n\n## LEGISLAÇÃO RECUPERADA DA BASE\n'
+          + '(Fonte primária. Cite apenas o que estiver aqui ou na BASE_LEI acima.)\n\n'
+          + trechosCombinados.slice(0, 12).map((t, i) => {
+              const label = t.fonte === 'textual' ? 'busca exata' : `similaridade ${(t.similarity * 100).toFixed(0)}%`
+              return `[TRECHO ${i + 1} — ${t.nome_documento} — ${label}]\n${t.trecho}`
             }).join('\n\n---\n\n')
-
-        ragStatus = `ok:${trechosFiltrados.length}_trechos`
       }
 
     } catch (e) {
       console.error('RAG falhou:', e.message)
       ragStatus = `erro:${e.message}`
-      // Avisa o modelo que a base vetorial está indisponível
       contextoRAG = `\n\n## ⚠️ AVISO INTERNO — BASE VETORIAL INDISPONÍVEL\n`
-        + `A busca na base de dados legislativa falhou (${e.message}). `
-        + `Responda EXCLUSIVAMENTE com base na BASE_LEI hardcoded acima. `
-        + `Ao final de qualquer citação normativa, acrescente: "[Validar dispositivo — base vetorial indisponível nesta consulta]".`
+        + `Erro: ${e.message}. Responda com a BASE_LEI. Sinalize ao fiscal que a base está indisponível nesta consulta.`
     }
   } else {
     contextoRAG = `\n\n## ⚠️ AVISO INTERNO — RAG NÃO CONFIGURADO\n`
-      + `Variáveis OPENAI_API_KEY, SUPABASE_URL ou SUPABASE_KEY ausentes. `
-      + `Responda apenas com a BASE_LEI. Sinalize ao fiscal quando citar dispositivos que precisam de validação.`
+      + `Variáveis ausentes. Responda apenas com a BASE_LEI e sinalize ao fiscal.`
   }
 
   // ─── CORTAR HISTÓRICO PARA NÃO ESTOURAR CONTEXTO ─────────────────────────
