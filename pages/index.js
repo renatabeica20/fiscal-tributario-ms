@@ -1167,6 +1167,19 @@ export default function Home() {
     }, 400)
   }
 
+  const [editandoNome, setEditandoNome] = useState(null) // { id, valor }
+
+  const salvarNomeEditado = async () => {
+    if (!editandoNome) return
+    const { id, valor } = editandoNome
+    // Detecta se é autuado ou infracao que está sendo editado
+    await supabase.from('historico_documentos')
+      .update({ autuado: valor })
+      .eq('id', id)
+    setHistoricoDocumentos(prev => prev.map(d => d.id === id ? { ...d, autuado: valor } : d))
+    setEditandoNome(null)
+  }
+
   const excluirDocumento = async (doc) => {
     await supabase.from('historico_documentos').delete().eq('id', doc.id)
     setHistoricoDocumentos(prev => prev.filter(d => d.id !== doc.id))
@@ -1315,9 +1328,33 @@ export default function Home() {
                                 {new Date(doc.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
-                            {doc.autuado && (
-                              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', color: '#a8a090', margin: '0 0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {doc.autuado}
+                            {editandoNome?.id === doc.id ? (
+                              <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+                                <input
+                                  autoFocus
+                                  value={editandoNome.valor}
+                                  onChange={e => setEditandoNome(prev => ({ ...prev, valor: e.target.value }))}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') salvarNomeEditado()
+                                    if (e.key === 'Escape') setEditandoNome(null)
+                                  }}
+                                  style={{
+                                    flex: 1, background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(201,168,76,0.4)', borderRadius: '6px',
+                                    padding: '5px 10px', color: '#c8c0b0',
+                                    fontFamily: "'DM Sans', sans-serif", fontSize: '0.8rem', outline: 'none'
+                                  }}
+                                />
+                                <button onClick={salvarNomeEditado} style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '6px', color: '#c9a84c', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75rem' }}>✓</button>
+                                <button onClick={() => setEditandoNome(null)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#5a6a7a', padding: '4px 8px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
+                              </div>
+                            ) : (
+                              <p
+                                onClick={() => setEditandoNome({ id: doc.id, valor: doc.autuado || '' })}
+                                title="Clique para editar"
+                                style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', color: '#a8a090', margin: '0 0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '2px' }}
+                              >
+                                {doc.autuado || <span style={{ color: '#3a4a5a', fontStyle: 'italic' }}>+ Adicionar identificação</span>}
                               </p>
                             )}
                             <div style={{ display: 'flex', gap: '8px' }}>
@@ -1713,7 +1750,7 @@ export default function Home() {
                 outline: 'none', boxSizing: 'border-box', marginBottom: '20px',
                 fontFamily: "'DM Sans', sans-serif"
               }}
-              onKeyDown={e => { if (e.key === 'Enter') confirmarSalvar() }}
+              onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
             />
 
             <div style={{ display: 'flex', gap: '10px' }}>
