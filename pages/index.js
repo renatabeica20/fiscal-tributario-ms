@@ -1155,6 +1155,7 @@ export default function Home() {
       setRespostasAtivas({})
       setModoAtivo(null)
       setModoOrigem(null)
+      setMsgCopiada(null)
       setFormContestacao({ tipo: 'contestacao', numero_doc: '', contribuinte: '', ie_contrib: '', cnpj_contrib: '', destinatario: '', texto_tvf: '', texto_contribuinte: '' })
       setFormTVF({ data: '', hora: '', endereco: '', cidade: 'Campo Grande', placas: [''], motorista: '', cpf: '', telefone: '', sujeito: '', ie: '', cnpj: '', mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }], infracao: 'sem_documento', motivo_inidonia: '', obs: '' })
       setFormTA({ data: '', hora: '', endereco: '', cidade: 'Campo Grande', placas: [''], motorista: '', cpf: '', telefone: '', sujeito: '', ie: '', cnpj: '', documentos: '', mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }], infracao: 'sem_documento', motivo_inidonia: '', responsavel: 'transportador', obs: '' })
@@ -1200,6 +1201,7 @@ export default function Home() {
     setRespostasAtivas({})
     setModoAtivo(null)
     setModoOrigem(null)
+    setMsgCopiada(null)
     if (sessaoIdRef.current) {
       await supabase
         .from('sessoes_chat')
