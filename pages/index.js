@@ -282,7 +282,7 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
     return { ...f, mercadoria: m }
   })
 
-  const obrigatoriosOk = form.data && form.hora && form.endereco && form.placa && form.motorista && form.sujeito && form.mercadoria[0]?.descricao
+  const obrigatoriosOk = form.data && form.hora && form.endereco && form.placas?.[0] && form.motorista && form.sujeito && form.mercadoria[0]?.descricao
 
   return (
     <div style={{ maxWidth: '820px', margin: '0 auto', padding: '24px' }}>
@@ -319,10 +319,39 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
       {/* VEÍCULO E CONDUTOR */}
       <div style={secaoStyle}>
         <div style={secaoTituloStyle}>🚛 Veículo e condutor</div>
-        <Grid cols={3}>
-          <Campo label="Placa *">
-            <input style={inputStyle} value={form.placa} onChange={e => setForm(f => ({ ...f, placa: mascaraPlaca(e.target.value) }))} placeholder="ABC-1D23" />
-          </Campo>
+        {/* Campo de placas — múltiplas para carreta */}
+        <div style={{ marginBottom: '12px' }}>
+          <label style={labelStyle}>Placa(s) *</label>
+          {form.placas.map((placa, i) => (
+            <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+              <input
+                style={{ ...inputStyle, flex: 1 }}
+                value={placa}
+                onChange={e => {
+                  const val = mascaraPlaca(e.target.value)
+                  setForm(f => {
+                    const p = [...f.placas]
+                    p[i] = val
+                    return { ...f, placas: p }
+                  })
+                }}
+                placeholder={i === 0 ? 'ABC-1D23 (tração)' : 'ABC-1D23 (reboque)'}
+              />
+              {i === 0 ? (
+                <button onClick={() => setForm(f => ({ ...f, placas: [...f.placas, ''] }))}
+                  style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '6px', color: '#c9a84c', padding: '8px 12px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                  + Reboque
+                </button>
+              ) : (
+                <button onClick={() => setForm(f => ({ ...f, placas: f.placas.filter((_, idx) => idx !== i) }))}
+                  style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '1rem', padding: '4px 8px' }}>
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <Grid cols={2}>
           <Campo label="Nome do motorista *">
             <input style={inputStyle} value={form.motorista} onChange={set('motorista')} placeholder="Nome completo" />
           </Campo>
@@ -582,7 +611,7 @@ function montarMensagemTVF(form) {
 Data: ${form.data}
 Hora: ${form.hora}
 Local: ${form.endereco}, ${form.cidade}/MS
-Placa: ${form.placa}
+Placa: ${form.placas.filter(p => p).join(' / ')}
 Motorista: ${form.motorista}${form.cpf ? ` — CPF: ${form.cpf}` : ''}${form.telefone ? ` — Tel: ${form.telefone}` : ''}
 Sujeito passivo: ${form.sujeito}${form.ie ? ` — IE: ${form.ie}` : ' — sem IE no MS'}${form.cnpj ? ` — CNPJ: ${form.cnpj}` : ''}
 Mercadoria: ${mercs}
@@ -603,7 +632,7 @@ function montarMensagemTA(form) {
 Data: ${form.data}
 Hora: ${form.hora}
 Local: ${form.endereco}, ${form.cidade}/MS
-Placa: ${form.placa}
+Placa: ${form.placas.filter(p => p).join(' / ')}
 Motorista: ${form.motorista}${form.cpf ? ` — CPF: ${form.cpf}` : ''}${form.telefone ? ` — Tel: ${form.telefone}` : ''}
 Sujeito passivo: ${form.sujeito}${form.ie ? ` — IE: ${form.ie}` : ' — sem IE no MS'}${form.cnpj ? ` — CNPJ: ${form.cnpj}` : ''}
 Documentos apresentados: ${form.documentos || 'nenhum'}
@@ -645,7 +674,7 @@ export default function Home() {
   const [modoAtivo, setModoAtivo] = useState(null) // null | 'consulta' | 'tvf' | 'ta' | 'contestacao'
   const [formTVF, setFormTVF] = useState({
     data: '', hora: '', endereco: '', cidade: 'Campo Grande',
-    placa: '', motorista: '', cpf: '', telefone: '',
+    placas: [''], motorista: '', cpf: '', telefone: '',
     sujeito: '', ie: '', cnpj: '',
     mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }],
     infracao: 'sem_documento',
@@ -654,7 +683,7 @@ export default function Home() {
   })
   const [formTA, setFormTA] = useState({
     data: '', hora: '', endereco: '', cidade: 'Campo Grande',
-    placa: '', motorista: '', cpf: '', telefone: '',
+    placas: [''], motorista: '', cpf: '', telefone: '',
     sujeito: '', ie: '', cnpj: '',
     documentos: '',
     mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }],
