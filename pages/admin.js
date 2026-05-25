@@ -18,6 +18,7 @@ export default function Admin() {
   const [indexando, setIndexando] = useState(false)
   const [progresso, setProgresso] = useState([])
   const [limparAntes, setLimparAntes] = useState(false)
+  const [pendentes, setPendentes] = useState([])
   const inputRef = useRef(null)
 
   useEffect(() => { verificarAdmin() }, [])
@@ -35,6 +36,24 @@ export default function Admin() {
     const { data } = await supabase.from('perfis').select('*').order('nome')
     setFiscais(data || [])
     setCarregando(false)
+  }
+
+  const carregarPendentes = async () => {
+    const { data } = await supabase.from('perfis').select('*').eq('status', 'pendente').order('criado_em')
+    setPendentes(data || [])
+  }
+
+  const aprovar = async (fiscal) => {
+    await supabase.from('perfis').update({ status: 'aprovado', ativo: true }).eq('id', fiscal.id)
+    setSucesso(`${fiscal.nome} aprovado com sucesso.`)
+    carregarPendentes()
+    carregarFiscais()
+  }
+
+  const rejeitar = async (fiscal) => {
+    await supabase.from('perfis').update({ status: 'rejeitado', ativo: false }).eq('id', fiscal.id)
+    setSucesso(`Solicitação de ${fiscal.nome} rejeitada.`)
+    carregarPendentes()
   }
 
   const criarFiscal = async (e) => {
@@ -157,6 +176,9 @@ export default function Admin() {
           <button className={`${styles.aba} ${aba === 'legislacao' ? styles.abaAtiva : ''}`} onClick={() => { setAba('legislacao'); setErro(''); setSucesso('') }}>
             📄 Indexar legislação
           </button>
+          <button className={`${styles.aba} ${aba === 'pendentes' ? styles.abaAtiva : ''}`} onClick={() => { setAba('pendentes'); carregarPendentes(); setErro(''); setSucesso('') }}>
+            ⏳ Solicitações {pendentes.length > 0 ? `(${pendentes.length})` : ''}
+          </button>
         </div>
 
         {/* ── Fiscais cadastrados ── */}
@@ -233,6 +255,37 @@ export default function Admin() {
               {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
               <button type="submit" className={styles.btnSalvar} disabled={salvando}>{salvando ? 'Cadastrando...' : 'Cadastrar fiscal'}</button>
             </form>
+          </div>
+        )}
+
+        {/* ── Solicitações pendentes ── */}
+        {aba === 'pendentes' && (
+          <div className={styles.card}>
+            <h2 className={styles.cardTitulo}>Solicitações de acesso pendentes</h2>
+            {pendentes.length === 0 ? (
+              <p className={styles.vazio}>Nenhuma solicitação pendente.</p>
+            ) : (
+              <table className={styles.tabela}>
+                <thead>
+                  <tr><th>Nome</th><th>Matrícula</th><th>Cargo</th><th>Solicitado em</th><th>Ações</th></tr>
+                </thead>
+                <tbody>
+                  {pendentes.map(f => (
+                    <tr key={f.id}>
+                      <td>{f.nome}</td>
+                      <td>{f.matricula || '—'}</td>
+                      <td>{f.cargo}</td>
+                      <td>{new Date(f.criado_em).toLocaleDateString('pt-BR')}</td>
+                      <td style={{ display: 'flex', gap: '8px' }}>
+                        <button className={`${styles.btnAcao} ${styles.btnAtivar}`} onClick={() => aprovar(f)}>✓ Aprovar</button>
+                        <button className={`${styles.btnAcao} ${styles.btnDesativar}`} onClick={() => rejeitar(f)}>✗ Rejeitar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
           </div>
         )}
 
