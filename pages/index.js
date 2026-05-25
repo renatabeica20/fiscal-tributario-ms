@@ -126,13 +126,13 @@ function extrairFato(texto) {
 function formatarTexto(txt) {
   let html = txt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   html = html
-    .replace(/===MATERIA_INICIO===/g, '<div style="border-left:3px solid #1a4a8a;padding:12px 16px;margin:10px 0;background:#f0f4f8;border-radius:0 6px 6px 0">')
+    .replace(/===MATERIA_INICIO===/g, '<div style="border-left:3px solid #c9a84c;padding:12px 16px;margin:10px 0;background:rgba(201,168,76,0.05);border-radius:0 6px 6px 0">')
     .replace(/===MATERIA_FIM===/g, '</div>')
   html = html
-    .replace(/^## (.+)$/gm, '<h3 style="color:#1a4a8a;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;font-family:monospace;font-weight:700">$1</h3>')
-    .replace(/^# (.+)$/gm, '<h3 style="color:#1a4a8a;font-size:0.92rem;margin:16px 0 8px;font-weight:700">$1</h3>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#1a4a8a">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^## (.+)$/gm, '<h3 style="color:#c9a84c;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.1em;margin:16px 0 6px;font-family:\'DM Sans\',sans-serif;font-weight:600">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h3 style="color:#c9a84c;font-size:0.9rem;margin:16px 0 8px;font-weight:700;font-family:\'Cormorant Garamond\',serif">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4b86a">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em style="color:#a8a090">$1</em>')
   const paragrafos = html.split('\n\n')
   html = paragrafos.map(p => {
     if (p.startsWith('<h3') || p.startsWith('<div') || p.trim() === '') return p
@@ -661,7 +661,7 @@ Responsável tributário: ${form.responsavel}${form.obs ? `
 Observações: ${form.obs}` : ''}`
 }
 
-function montarMensagemContestacao(form) {
+function montarMensagemContestacao(form, fiscal) {
   if (form.tipo === 'desk') {
     return `GERAR RESPOSTA A DESK no formato de carta formal.
 
@@ -685,7 +685,7 @@ A resposta deve ser uma carta formal com:
 6. "Permanecemos à disposição para quaisquer esclarecimentos adicionais."
 7. "Atenciosamente," seguido do nome do fiscal, cargo, matrícula e subunidade
 
-IMPORTANTE: O fiscal subscritor é Carlos Eduardo Meireles da Silva, Fiscal Tributário Estadual, Mat. 432846021, Subunidade de Fiscalização Móvel - Campo Grande/MS. Use esses dados na assinatura.
+IMPORTANTE: O fiscal subscritor é ${fiscal?.nome || 'Fiscal Tributário Estadual'}, ${fiscal?.cargo || 'Fiscal Tributário Estadual'}, Mat. ${fiscal?.matricula || ''}, Subunidade de Fiscalização Móvel - Campo Grande/MS. Use esses dados na assinatura.
 
 Gere a resposta em defesa do fisco, rebatendo os argumentos ponto a ponto com base na legislação tributária do MS.`
   }
@@ -711,7 +711,7 @@ A contestação deve seguir o formato de petição administrativa com:
 5. "III — CONCLUSÃO E PEDIDOS" — requer manutenção integral do lançamento
 6. Local, data e assinatura
 
-IMPORTANTE: O fiscal subscritor é Carlos Eduardo Meireles da Silva, Fiscal Tributário Estadual, Mat. 432846021, Subunidade de Fiscalização Móvel - Campo Grande/MS.
+IMPORTANTE: O fiscal subscritor é ${fiscal?.nome || 'Fiscal Tributário Estadual'}, ${fiscal?.cargo || 'Fiscal Tributário Estadual'}, Mat. ${fiscal?.matricula || ''}, Subunidade de Fiscalização Móvel - Campo Grande/MS.
 
 Gere a contestação em defesa do fisco, rebatendo os argumentos ponto a ponto com base na legislação tributária do MS.`
 }
@@ -1450,7 +1450,7 @@ export default function Home() {
             setForm={setFormContestacao}
             onVoltar={() => setModoAtivo(null)}
             onGerar={() => {
-              const msg = montarMensagemContestacao(formContestacao)
+              const msg = montarMensagemContestacao(formContestacao, fiscal)
               setModoAtivo('consulta')
               enviar(msg)
             }}
