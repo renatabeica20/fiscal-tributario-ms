@@ -1148,11 +1148,16 @@ export default function Home() {
     setLabelSalvar('')
     setTipoEscolhido('')
     setMsgCopiada(idxSalvo ?? null)
-    // Limpar conversa
+    // Limpar conversa e formulários
     setTimeout(() => {
       setMensagens([])
       setHistorico([])
       setRespostasAtivas({})
+      setModoAtivo(null)
+      setModoOrigem(null)
+      setFormContestacao({ tipo: 'contestacao', numero_doc: '', contribuinte: '', ie_contrib: '', cnpj_contrib: '', destinatario: '', texto_tvf: '', texto_contribuinte: '' })
+      setFormTVF({ data: '', hora: '', endereco: '', cidade: 'Campo Grande', placas: [''], motorista: '', cpf: '', telefone: '', sujeito: '', ie: '', cnpj: '', mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }], infracao: 'sem_documento', motivo_inidonia: '', obs: '' })
+      setFormTA({ data: '', hora: '', endereco: '', cidade: 'Campo Grande', placas: [''], motorista: '', cpf: '', telefone: '', sujeito: '', ie: '', cnpj: '', documentos: '', mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }], infracao: 'sem_documento', motivo_inidonia: '', responsavel: 'transportador', obs: '' })
       if (sessaoIdRef.current) {
         supabase
           .from('sessoes_chat')
@@ -1216,12 +1221,12 @@ export default function Home() {
       {/* PAINEL HISTÓRICO */}
       {painelHistorico && (() => {
         const TIPOS_AUTUACAO = ['TVF', 'TA', 'ALIM']
-        const TIPOS_DEFESA = ['DESK', 'CONTESTACAO', 'Contestação']
-        const docsAba = historicoDocumentos.filter(d =>
-          abaHistorico === 'autuacao'
-            ? TIPOS_AUTUACAO.includes(d.tipo)
-            : TIPOS_DEFESA.some(t => d.tipo?.toUpperCase().includes(t.toUpperCase()))
-        )
+        const docsAba = historicoDocumentos.filter(d => {
+          const tipo = (d.tipo || '').toUpperCase()
+          const eAutuacao = TIPOS_AUTUACAO.includes(tipo)
+          if (abaHistorico === 'autuacao') return eAutuacao
+          return !eAutuacao // tudo que não é autuação vai para defesa
+        })
         const gruposAba = agruparPorData(docsAba)
 
         const corTipo = (tipo) => {
