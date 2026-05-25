@@ -8,7 +8,7 @@ const ROTAS_PUBLICAS = ['/login', '/cadastro', '/aguardando']
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
-  const [verificando, setVerificando] = useState(true)
+  const [verificando, setVerificando] = useState(false)
   const [atualizacaoPendente, setAtualizacaoPendente] = useState(false)
 
   useEffect(() => {
@@ -83,16 +83,8 @@ export default function App({ Component, pageProps }) {
     return () => subscription.unsubscribe()
   }, [router.pathname])
 
-  if (verificando && !ROTAS_PUBLICAS.includes(router.pathname)) {
-    return (
-  <div style={{
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#080d14',
-  }} />
-)
+  if (verificando) {
+    return <div style={{ minHeight: '100vh', background: '#080d14' }} />
   }
 
   return (
@@ -110,7 +102,7 @@ export default function App({ Component, pageProps }) {
           left: 0,
           right: 0,
           zIndex: 9999,
-          background: 'linear-gradient(135deg, #0d2f5e, #1a4a8a)',
+          background: '#0a1220',
           borderBottom: '3px solid #e8a000',
           padding: '12px 20px',
           display: 'flex',
