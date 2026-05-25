@@ -549,6 +549,11 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
         <Campo label="Contribuinte / Razão social *">
           <input style={inputStyle} value={form.contribuinte} onChange={set('contribuinte')} placeholder="Nome ou razão social" />
         </Campo>
+        {form.tipo === 'desk' && (
+          <Campo label="Nome do destinatário (quem assinou o DESK)">
+            <input style={inputStyle} value={form.destinatario || ''} onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: Jair Perin" />
+          </Campo>
+        )}
         <Grid cols={2}>
           <Campo label="IE">
             <input style={inputStyle} value={form.ie_contrib} onChange={e => setForm(f => ({ ...f, ie_contrib: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
@@ -557,6 +562,68 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
             <input style={inputStyle} value={form.cnpj_contrib} onChange={e => setForm(f => ({ ...f, cnpj_contrib: mascaraCNPJ(e.target.value) }))} placeholder="00.000.000/0000-00" />
           </Campo>
         </Grid>
+      </div>
+
+      {/* Upload do TVF/TA */}
+      <div style={secaoStyle}>
+        <div style={secaoTituloStyle}>📄 TVF / TA original (opcional)</div>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#4a5a6a', marginBottom: '12px' }}>
+          Anexe o PDF do TVF ou TA autuado. O Oráculo terá acesso completo aos fatos e fundamentação para gerar uma resposta mais precisa.
+        </p>
+
+        {!form.texto_tvf ? (
+          <div>
+            <input
+              type="file"
+              accept=".pdf"
+              id="upload-tvf"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const arquivo = e.target.files?.[0]
+                if (!arquivo) return
+                setExtraindoPDF(true)
+                setNomePDF(arquivo.name)
+                try {
+                  const { data: { session } } = await supabase.auth.getSession()
+                  const fd = new FormData()
+                  fd.append('pdf', arquivo)
+                  const resp = await fetch('/api/extrair-pdf', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${session?.access_token}` },
+                    body: fd
+                  })
+                  const data = await resp.json()
+                  if (!resp.ok) throw new Error(data.error)
+                  setForm(f => ({ ...f, texto_tvf: data.texto }))
+                } catch (err) {
+                  alert('Erro ao extrair PDF: ' + err.message)
+                  setNomePDF('')
+                } finally {
+                  setExtraindoPDF(false)
+                }
+              }}
+            />
+            <label htmlFor="upload-tvf" style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '10px 20px', borderRadius: '8px', cursor: 'pointer',
+              background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)',
+              color: '#c9a84c', fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem'
+            }}>
+              {extraindoPDF ? '⏳ Extraindo texto...' : '📎 Selecionar PDF do TVF/TA'}
+            </label>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: 'rgba(50,160,80,0.08)', border: '1px solid rgba(50,160,80,0.2)', borderRadius: '8px' }}>
+            <span style={{ color: '#50c878', fontSize: '1rem' }}>✓</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', color: '#50c878', flex: 1 }}>
+              {nomePDF} — texto extraído com sucesso
+            </span>
+            <button onClick={() => { setForm(f => ({ ...f, texto_tvf: '' })); setNomePDF('') }}
+              style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '0.8rem' }}>
+              Remover
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={secaoStyle}>
@@ -643,15 +710,58 @@ Observações: ${form.obs}` : ''}`
 }
 
 function montarMensagemContestacao(form) {
-  const tipo = form.tipo === 'contestacao' ? 'CONTESTAÇÃO DE IMPUGNAÇÃO (ALIM)' : 'RESPOSTA A DESK'
-  return `GERAR ${tipo}
-Número do documento: ${form.numero_doc}
-Contribuinte: ${form.contribuinte}${form.ie_contrib ? ` — IE: ${form.ie_contrib}` : ''}${form.cnpj_contrib ? ` — CNPJ: ${form.cnpj_contrib}` : ''}
+  if (form.tipo === 'desk') {
+    return `GERAR RESPOSTA A DESK no formato de carta formal.
 
-TEXTO DO CONTRIBUINTE (impugnação/reclamação):
+Número do TVF/TA: ${form.numero_doc}
+Destinatário (quem assinou o DESK): ${form.destinatario || 'Senhor(a)'}
+Contribuinte: ${form.contribuinte}${form.ie_contrib ? ` — IE: ${form.ie_contrib}` : ''}${form.cnpj_contrib ? ` — CNPJ: ${form.cnpj_contrib}` : ''}
+${form.texto_tvf ? `
+TEXTO COMPLETO DO TVF/TA (use como referência dos fatos e fundamentação):
+${form.texto_tvf}
+` : ''}
+TEXTO DO DESK DO CONTRIBUINTE:
 ${form.texto_contribuinte}
 
+INSTRUÇÕES DE FORMATO OBRIGATÓRIO:
+A resposta deve ser uma carta formal com:
+1. "Prezado Sr./Sra. [nome do destinatário]," — saudação inicial
+2. Parágrafo de acuse de recebimento referenciando o TVF nº e a data/local da fiscalização
+3. Síntese do(s) argumento(s) principal(is) apresentado(s)
+4. Resposta fundamentada rebatendo cada argumento com base na legislação
+5. Parágrafo final mantendo a validade do TVF
+6. "Permanecemos à disposição para quaisquer esclarecimentos adicionais."
+7. "Atenciosamente," seguido do nome do fiscal, cargo, matrícula e subunidade
+
+IMPORTANTE: O fiscal subscritor é Carlos Eduardo Meireles da Silva, Fiscal Tributário Estadual, Mat. 432846021, Subunidade de Fiscalização Móvel - Campo Grande/MS. Use esses dados na assinatura.
+
 Gere a resposta em defesa do fisco, rebatendo os argumentos ponto a ponto com base na legislação tributária do MS.`
+  }
+
+  // Contestação de ALIM
+  return `GERAR CONTESTAÇÃO DE IMPUGNAÇÃO (ALIM) no formato de petição administrativa formal.
+
+Número do ALIM: ${form.numero_doc}
+Contribuinte: ${form.contribuinte}${form.ie_contrib ? ` — IE: ${form.ie_contrib}` : ''}${form.cnpj_contrib ? ` — CNPJ: ${form.cnpj_contrib}` : ''}
+${form.texto_tvf ? `
+TEXTO COMPLETO DO TVF/TA AUTUADO (use como referência dos fatos e fundamentação):
+${form.texto_tvf}
+` : ''}
+TEXTO DA IMPUGNAÇÃO DO CONTRIBUINTE:
+${form.texto_contribuinte}
+
+INSTRUÇÕES DE FORMATO OBRIGATÓRIO:
+A contestação deve seguir o formato de petição administrativa com:
+1. Cabeçalho: "Ilmº. Sr. Julgador Administrativo..."
+2. Identificação do ALIM, fiscal autor e contribuinte
+3. "I — DOS FATOS" — síntese da infração
+4. "II — DA IMPROCEDÊNCIA DA IMPUGNAÇÃO" — rebate cada argumento numerado
+5. "III — CONCLUSÃO E PEDIDOS" — requer manutenção integral do lançamento
+6. Local, data e assinatura
+
+IMPORTANTE: O fiscal subscritor é Carlos Eduardo Meireles da Silva, Fiscal Tributário Estadual, Mat. 432846021, Subunidade de Fiscalização Móvel - Campo Grande/MS.
+
+Gere a contestação em defesa do fisco, rebatendo os argumentos ponto a ponto com base na legislação tributária do MS.`
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -696,8 +806,12 @@ export default function Home() {
     tipo: 'contestacao',
     numero_doc: '',
     contribuinte: '', ie_contrib: '', cnpj_contrib: '',
+    destinatario: '',
+    texto_tvf: '', // texto extraído do PDF do TVF/TA
     texto_contribuinte: ''
   })
+  const [extraindoPDF, setExtraindoPDF] = useState(false)
+  const [nomePDF, setNomePDF] = useState('')
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [datasExpandidas, setDatasExpandidas] = useState({})
