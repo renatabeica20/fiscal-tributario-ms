@@ -72,6 +72,7 @@ TA — EXCEÇÃO: sem IE no MS, clandestino, impossível identificar responsáve
 ## ALÍQUOTAS — ART. 41, LEI 1.810/97
 17% — operações internas e importações (art. 41, III, "a"). Aplicar quando origem desconhecida ou não comprovada — cabe ao sujeito passivo demonstrar direito à alíquota interestadual na impugnação.
 12% — operações interestaduais comprovadas (art. 41, I, "a")
+28% — bebidas alcoólicas, fumo, cigarros e derivados do fumo, operações internas ou importação (art. 41, VIII, RICMS/MS, Decreto nº 9.203/98).
 GLP (gás de cozinha): verificar alíquota específica na legislação — produto com tratamento diferenciado.
 
 ## BASE DE CÁLCULO SEM DOCUMENTO FISCAL
