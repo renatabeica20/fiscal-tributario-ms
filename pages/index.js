@@ -735,6 +735,7 @@ export default function Home() {
   const [confirmarExclusao, setConfirmarExclusao] = useState(null) // doc a excluir
   const [labelSalvar, setLabelSalvar] = useState('')
   const [tipoEscolhido, setTipoEscolhido] = useState('')
+  const [msgCopiada, setMsgCopiada] = useState(null) // índice da mensagem copiada
   const [modoAtivo, setModoAtivo] = useState(null) // null | 'consulta' | 'tvf' | 'ta' | 'contestacao'
   const [formTVF, setFormTVF] = useState({
     data: '', hora: '', endereco: '', cidade: 'Campo Grande',
@@ -1082,20 +1083,21 @@ export default function Home() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() }
   }
 
-  const copiarTexto = (texto) => {
+  const copiarTexto = (texto, msgIdx) => {
     const inicio = texto.indexOf('===MATERIA_INICIO===')
     const fim = texto.indexOf('===MATERIA_FIM===')
     const eMateria = inicio !== -1 && fim !== -1
     const textoCopiar = eMateria ? texto.substring(inicio + 20, fim).trim() : texto
-    if (eMateria) {
-      // Pré-preencher com tipo + autuado detectados
-      const tipoDoc = detectarTipoDocumento(texto) || ''
-      const autuadoDoc = extrairAutuado(textoCopiar) || ''
-      setLabelSalvar(tipoDoc ? `${tipoDoc} - ` : '')
-      setPopupSalvar({ textoCopiar, autuado: autuadoDoc })
-    } else {
-      navigator.clipboard.writeText(textoCopiar)
-    }
+
+    // Detecta tipo e sugestão
+    const tipoSugerido = detectarTipoDocumento(texto) || ''
+    const autuadoDoc = extrairAutuado(textoCopiar) || ''
+
+    // Sempre abre popup para salvar
+    setTipoEscolhido(tipoSugerido)
+    setLabelSalvar('')
+    setMsgCopiada(msgIdx)
+    setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido })
   }
 
   const confirmarSalvar = async () => {
@@ -1124,6 +1126,7 @@ export default function Home() {
     setTipoEscolhido('')
     setPopupSalvar(null)
     setLabelSalvar('')
+    setTipoEscolhido('')
     // Limpar conversa
     setTimeout(() => {
       setMensagens([])
@@ -1556,7 +1559,20 @@ export default function Home() {
                     ) : (
                       <>
                         <div dangerouslySetInnerHTML={{ __html: formatarTexto(msg.texto) }} />
-                        <button onClick={() => copiarTexto(msg.texto)} className={styles.btnCopiar}>📋 Copiar matéria</button>
+                        <button
+                          onClick={() => copiarTexto(msg.texto, msgIdx)}
+                          style={{
+                            marginTop: '12px',
+                            background: msgCopiada === msgIdx ? 'rgba(80,200,120,0.15)' : 'transparent',
+                            border: msgCopiada === msgIdx ? '1px solid rgba(80,200,120,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '6px', color: msgCopiada === msgIdx ? '#50c878' : '#4a5a6a',
+                            padding: '6px 16px', fontSize: '0.75rem', cursor: 'pointer',
+                            fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em',
+                            transition: 'all 0.3s', display: 'inline-flex', alignItems: 'center', gap: '6px'
+                          }}
+                        >
+                          {msgCopiada === msgIdx ? '✓ Salvo' : '📋 Copiar matéria'}
+                        </button>
                       </>
                     )}
                   </div>
