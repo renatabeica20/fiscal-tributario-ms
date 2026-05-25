@@ -100,7 +100,8 @@ function detectarTipoDocumento(texto) {
   if (t.includes('TERMO DE VERIFICAÇÃO FISCAL') || t.includes('TVF')) return 'TVF'
   if (t.includes('TERMO DE APREENSÃO') || t.includes(' TA') || t.includes('TA ') || t === 'TA') return 'TA'
   if (t.includes('AUTO DE LANÇAMENTO') || t.includes('ALIM')) return 'ALIM'
-  if (t.includes('CONTESTAÇÃO') || t.includes('IMPUGNAÇÃO')) return 'Contestação'
+  if (t.includes('CONTESTAÇÃO') || t.includes('IMPUGNAÇÃO') || t.includes('CONTESTACAO')) return 'CONTESTACAO'
+  if (t.includes('DESK') || t.includes('PREZADO') || t.includes('ACUSAMOS O RECEBIMENTO')) return 'DESK'
   return null
 }
 
@@ -728,6 +729,7 @@ export default function Home() {
   const [fontSize, setFontSize] = useState(14)
   const [imagens, setImagens] = useState([])
   const [painelHistorico, setPainelHistorico] = useState(false)
+  const [abaHistorico, setAbaHistorico] = useState('autuacao') // autuacao | defesa
   const [avisoLimite, setAvisoLimite] = useState(false)
   const [popupSalvar, setPopupSalvar] = useState(null) // { texto, textoCopiar }
   const [confirmarExclusao, setConfirmarExclusao] = useState(null) // doc a excluir
@@ -1108,16 +1110,18 @@ export default function Home() {
     }
     // Salvar no banco com label do fiscal
     if (fiscal) {
-      const tipo = detectarTipoDocumento(textoCopiar) || 'TVF'
+      const tipo = tipoEscolhido || detectarTipoDocumento(textoCopiar) || 'TVF'
+      const ehDefesa = ['DESK', 'CONTESTACAO'].includes(tipo)
       await supabase.from('historico_documentos').upsert({
         fiscal_id: fiscal.id,
         tipo,
-        autuado: popupSalvar.autuado,
-        infracao: labelSalvar.replace(tipo, '').replace(/^[\s\-]+|[\s\-]+$/g, '') || null,
+        autuado: ehDefesa ? (labelSalvar || popupSalvar.autuado || null) : popupSalvar.autuado,
+        infracao: ehDefesa ? null : (labelSalvar.replace(tipo, '').replace(/^[\s\-]+|[\s\-]+$/g, '') || null),
         materia_tributaria: textoCopiar,
         conversa: historico.slice(-10)
       })
     }
+    setTipoEscolhido('')
     setPopupSalvar(null)
     setLabelSalvar('')
     // Limpar conversa
@@ -1185,70 +1189,133 @@ export default function Home() {
   return (
     <div className={styles.app}>
       {/* PAINEL HISTÓRICO */}
-      {painelHistorico && (
-        <div className={styles.painelOverlay} style={{justifyContent:"flex-start"}} onClick={() => setPainelHistorico(false)}>
-          <div className={styles.painel} onClick={e => e.stopPropagation()}>
-            <div className={styles.painelHeader}>
-              <button onClick={() => setPainelHistorico(false)} style={{background:'transparent',border:'none',color:'#fff',fontSize:'1.4rem',cursor:'pointer',padding:'8px 12px',minWidth:'44px',minHeight:'44px',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
-              <h2 className={styles.painelTitulo}>📋 Histórico de Documentos</h2>
-            </div>
-            {carregandoHistorico ? (
-              <p className={styles.painelVazio}>Carregando...</p>
-            ) : historicoDocumentos.length === 0 ? (
-              <p className={styles.painelVazio}>Nenhum documento gerado ainda.</p>
-            ) : (
-              <div className={styles.painelLista}>
-                {Object.entries(gruposHistorico).map(([data, docs]) => (
-                  <div key={data}>
-                    {/* Cabeçalho da data — clicável */}
-                    <button
-                      onClick={() => toggleData(data)}
-                      style={{
-                        width: '100%', textAlign: 'left', background: '#f0f4f8',
-                        border: 'none', borderRadius: '8px', padding: '10px 14px',
-                        marginBottom: '8px', cursor: 'pointer',
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        fontSize: '0.8rem', fontWeight: 700, color: '#0d2f5e',
-                        fontFamily: 'monospace', letterSpacing: '0.06em'
-                      }}
-                    >
-                      <span>📅 {data}</span>
-                      <span style={{ fontSize: '0.7rem', color: '#546e7a' }}>
-                        {docs.length} doc{docs.length > 1 ? 's' : ''} {datasExpandidas[data] ? '▲' : '▼'}
-                      </span>
-                    </button>
+      {painelHistorico && (() => {
+        const TIPOS_AUTUACAO = ['TVF', 'TA', 'ALIM']
+        const TIPOS_DEFESA = ['DESK', 'CONTESTACAO', 'Contestação']
+        const docsAba = historicoDocumentos.filter(d =>
+          abaHistorico === 'autuacao'
+            ? TIPOS_AUTUACAO.includes(d.tipo)
+            : TIPOS_DEFESA.some(t => d.tipo?.toUpperCase().includes(t.toUpperCase()))
+        )
+        const gruposAba = agruparPorData(docsAba)
 
-                    {/* Documentos da data */}
-                    {datasExpandidas[data] && docs.map(doc => (
-                      <div key={doc.id} className={styles.painelItem} style={{ marginBottom: '8px' }}>
-                        <div className={styles.painelItemHeader}>
-                          <span className={styles.painelTipo}>{doc.tipo}{doc.infracao ? ` · ${doc.infracao}` : ''}</span>
-                          <span className={styles.painelData}>{new Date(doc.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        {doc.autuado && <p className={styles.painelAutuado}>{doc.autuado}</p>}
-                        <div className={styles.painelAcoes}>
-                          <button className={styles.painelBtnUsar} style={{fontSize:'0.78rem',padding:'6px 16px',flex:1}} onClick={() => setDocVisualizando(doc)}>
-                            👁 Ver documento
-                          </button>
-                          <button
-                            onClick={() => setConfirmarExclusao(doc)}
-                            title="Excluir documento"
-                            style={{
-                              background:'transparent',border:'1px solid #ffcdd2',borderRadius:'7px',
-                              color:'#c62828',padding:'6px 10px',fontSize:'0.85rem',
-                              cursor:'pointer',flexShrink:0
-                            }}
-                          >🗑</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+        const corTipo = (tipo) => {
+          if (!tipo) return { bg: 'rgba(201,168,76,0.15)', cor: '#c9a84c', borda: 'rgba(201,168,76,0.3)' }
+          const t = tipo.toUpperCase()
+          if (t === 'TVF') return { bg: 'rgba(201,168,76,0.15)', cor: '#c9a84c', borda: 'rgba(201,168,76,0.3)' }
+          if (t === 'TA') return { bg: 'rgba(200,100,50,0.15)', cor: '#e07040', borda: 'rgba(200,100,50,0.3)' }
+          if (t === 'ALIM') return { bg: 'rgba(160,100,200,0.15)', cor: '#b080e0', borda: 'rgba(160,100,200,0.3)' }
+          if (t.includes('DESK')) return { bg: 'rgba(50,120,200,0.15)', cor: '#5090d0', borda: 'rgba(50,120,200,0.3)' }
+          if (t.includes('CONTEST')) return { bg: 'rgba(80,160,100,0.15)', cor: '#50a060', borda: 'rgba(80,160,100,0.3)' }
+          return { bg: 'rgba(201,168,76,0.15)', cor: '#c9a84c', borda: 'rgba(201,168,76,0.3)' }
+        }
+
+        return (
+          <div className={styles.painelOverlay} style={{justifyContent:"flex-start"}} onClick={() => setPainelHistorico(false)}>
+            <div className={styles.painel} onClick={e => e.stopPropagation()}>
+              <div className={styles.painelHeader}>
+                <button onClick={() => setPainelHistorico(false)} style={{background:'transparent',border:'none',color:'#c9a84c',fontSize:'1.4rem',cursor:'pointer',padding:'8px 12px',minWidth:'44px',minHeight:'44px',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+                <h2 className={styles.painelTitulo}>📋 Histórico de Documentos</h2>
+              </div>
+
+              {/* Abas */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 12px' }}>
+                {[
+                  { id: 'autuacao', label: '⚖️ TVF / TA' },
+                  { id: 'defesa', label: '🛡️ Contestação / DESK' }
+                ].map(aba => (
+                  <button key={aba.id} onClick={() => setAbaHistorico(aba.id)}
+                    style={{
+                      flex: 1, padding: '12px 8px', border: 'none', background: 'transparent',
+                      fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', fontWeight: 500,
+                      cursor: 'pointer', letterSpacing: '0.03em',
+                      color: abaHistorico === aba.id ? '#c9a84c' : '#3a4a5a',
+                      borderBottom: abaHistorico === aba.id ? '2px solid #c9a84c' : '2px solid transparent',
+                      marginBottom: '-1px', transition: 'all 0.2s'
+                    }}
+                  >
+                    {aba.label}
+                  </button>
                 ))}
               </div>
-            )}
+
+              {carregandoHistorico ? (
+                <p className={styles.painelVazio}>Carregando...</p>
+              ) : docsAba.length === 0 ? (
+                <p className={styles.painelVazio}>Nenhum documento nesta categoria.</p>
+              ) : (
+                <div className={styles.painelLista}>
+                  {Object.entries(gruposAba).map(([data, docs]) => (
+                    <div key={data}>
+                      <button onClick={() => toggleData(data)} style={{
+                        width: '100%', textAlign: 'left',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: '8px', padding: '10px 14px',
+                        marginBottom: '8px', cursor: 'pointer',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        fontSize: '0.8rem', fontWeight: 700, color: '#c9a84c',
+                        fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.06em'
+                      }}>
+                        <span>📅 {data}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#4a5a6a' }}>
+                          {docs.length} doc{docs.length > 1 ? 's' : ''} {datasExpandidas[data] ? '▲' : '▼'}
+                        </span>
+                      </button>
+
+                      {datasExpandidas[data] && docs.map(doc => {
+                        const { bg, cor, borda } = corTipo(doc.tipo)
+                        return (
+                          <div key={doc.id} style={{
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            borderRadius: '10px', padding: '12px 14px',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span style={{
+                                background: bg, color: cor, border: `1px solid ${borda}`,
+                                borderRadius: '6px', padding: '3px 10px',
+                                fontFamily: "'DM Sans', sans-serif", fontSize: '0.7rem', fontWeight: 600,
+                                letterSpacing: '0.06em'
+                              }}>
+                                {doc.tipo}{doc.infracao ? ` · ${doc.infracao}` : ''}
+                              </span>
+                              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: '#3a4a5a' }}>
+                                {new Date(doc.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            {doc.autuado && (
+                              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', color: '#a8a090', margin: '0 0 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {doc.autuado}
+                              </p>
+                            )}
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => setDocVisualizando(doc)} style={{
+                                flex: 1, background: 'rgba(201,168,76,0.1)', color: '#c9a84c',
+                                border: '1px solid rgba(201,168,76,0.2)', borderRadius: '7px',
+                                padding: '7px 10px', fontFamily: "'DM Sans', sans-serif",
+                                fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer'
+                              }}>
+                                👁 Ver documento
+                              </button>
+                              <button onClick={() => setConfirmarExclusao(doc)} style={{
+                                background: 'transparent', border: '1px solid rgba(200,80,80,0.2)',
+                                borderRadius: '7px', color: '#c87070', padding: '7px 10px',
+                                fontSize: '0.85rem', cursor: 'pointer', flexShrink: 0
+                              }}>🗑</button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* POP-UP VER DOCUMENTO */}
       {docVisualizando && (
@@ -1552,57 +1619,109 @@ export default function Home() {
       {popupSalvar && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(6,26,54,0.65)', backdropFilter: 'blur(4px)',
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-        }} onClick={() => setPopupSalvar(null)}>
+        }} onClick={() => { setPopupSalvar(null); setTipoEscolhido('') }}>
           <div style={{
-            background: '#fff', borderRadius: '16px', padding: '32px 28px',
-            maxWidth: '420px', width: '100%', textAlign: 'center',
-            boxShadow: '0 24px 60px rgba(6,26,54,0.4)', borderTop: '4px solid #e8a000'
+            background: '#0e1620', borderRadius: '16px', padding: '28px 24px',
+            maxWidth: '460px', width: '100%', textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+            border: '1px solid rgba(201,168,76,0.2)',
+            borderTop: '3px solid #c9a84c'
           }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💾</div>
-            <h3 style={{ color: '#0d2f5e', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>
-              Salvar e copiar documento
+            <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: '#c9a84c', fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
+              Salvar documento
             </h3>
-            <p style={{ color: '#546e7a', fontSize: '0.82rem', marginBottom: '20px', lineHeight: 1.5 }}>
-              Como quer identificar este documento no histórico?<br/>
-              <span style={{ fontSize: '0.75rem', color: '#90a4ae' }}>Ex: TVF - Fato 593, TA - Mercadoria sem NF</span>
+
+            {/* Seleção do tipo */}
+            <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#7a8a9a', fontSize: '0.8rem', marginBottom: '14px' }}>
+              Selecione o tipo:
+              {popupSalvar?.tipoSugerido && (
+                <span style={{ display: 'block', fontSize: '0.72rem', color: '#c9a84c', marginTop: '4px' }}>
+                  ⚡ Sugerido: {popupSalvar.tipoSugerido}
+                </span>
+              )}
+            </p>
+
+            {/* Linha 1: autuações */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              {['TVF', 'TA', 'ALIM'].map(tipo => (
+                <button key={tipo} onClick={() => setTipoEscolhido(tipo)} style={{
+                  flex: 1, padding: '10px 6px', borderRadius: '8px', cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', fontWeight: 700,
+                  background: tipoEscolhido === tipo ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.04)',
+                  border: tipoEscolhido === tipo ? '2px solid #c9a84c' : '1px solid rgba(255,255,255,0.1)',
+                  color: tipoEscolhido === tipo ? '#c9a84c' : '#5a6a7a',
+                  boxShadow: tipoEscolhido === tipo ? '0 0 12px rgba(201,168,76,0.2)' : 'none',
+                  transition: 'all 0.2s'
+                }}>{tipo}</button>
+              ))}
+            </div>
+            {/* Linha 2: defesas */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              {[
+                { id: 'DESK', label: 'DESK' },
+                { id: 'CONTESTACAO', label: 'CONTESTAÇÃO' }
+              ].map(({ id, label }) => (
+                <button key={id} onClick={() => setTipoEscolhido(id)} style={{
+                  flex: 1, padding: '10px 6px', borderRadius: '8px', cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', fontWeight: 700,
+                  background: tipoEscolhido === id ? 'rgba(80,144,208,0.2)' : 'rgba(255,255,255,0.04)',
+                  border: tipoEscolhido === id ? '2px solid #5090d0' : '1px solid rgba(255,255,255,0.1)',
+                  color: tipoEscolhido === id ? '#5090d0' : '#5a6a7a',
+                  transition: 'all 0.2s'
+                }}>{label}</button>
+              ))}
+            </div>
+
+            {/* Identificação */}
+            <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#7a8a9a', fontSize: '0.78rem', marginBottom: '8px' }}>
+              Identificação no histórico (opcional):
             </p>
             <input
               type="text"
               value={labelSalvar}
               onChange={e => setLabelSalvar(e.target.value)}
-              placeholder="Ex: TVF - Fato 593"
+              placeholder="Ex: Fato 593 · Meyer Ltda"
               autoFocus
               style={{
-                width: '100%', padding: '11px 14px', border: '2px solid #b0c4de',
-                borderRadius: '9px', fontSize: '0.92rem', color: '#0d2f5e',
+                width: '100%', padding: '11px 14px',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderRadius: '9px', fontSize: '0.9rem', color: '#c8c0b0',
+                background: 'rgba(255,255,255,0.04)',
                 outline: 'none', boxSizing: 'border-box', marginBottom: '20px',
-                fontFamily: 'inherit', transition: 'border-color 0.2s'
+                fontFamily: "'DM Sans', sans-serif"
               }}
-              onFocus={e => e.target.style.borderColor = '#1a4a8a'}
-              onBlur={e => e.target.style.borderColor = '#b0c4de'}
               onKeyDown={e => { if (e.key === 'Enter') confirmarSalvar() }}
             />
+
+            {!tipoEscolhido && (
+              <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#c87070', fontSize: '0.75rem', marginBottom: '12px' }}>
+                ⚠ Selecione o tipo antes de salvar
+              </p>
+            )}
+
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={confirmarSalvar}
-                style={{
-                  flex: 1, background: 'linear-gradient(135deg, #1a4a8a, #0d2f5e)',
-                  color: '#fff', border: 'none', borderRadius: '9px', padding: '12px',
-                  fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer'
-                }}
-              >
+              <button onClick={confirmarSalvar} disabled={!tipoEscolhido} style={{
+                flex: 1,
+                background: tipoEscolhido ? 'linear-gradient(135deg, #b8902a, #c9a84c)' : 'rgba(255,255,255,0.05)',
+                color: tipoEscolhido ? '#0d0f12' : '#3a4a5a',
+                border: 'none', borderRadius: '9px', padding: '13px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '0.88rem', fontWeight: 700,
+                cursor: tipoEscolhido ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s'
+              }}>
                 ✓ Salvar e copiar
               </button>
-              <button
-                onClick={() => setPopupSalvar(null)}
-                style={{
-                  background: '#f0f4f8', color: '#546e7a', border: '1px solid #c3d0e0',
-                  borderRadius: '9px', padding: '12px 16px', fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
-              >
+              <button onClick={() => { setPopupSalvar(null); setTipoEscolhido('') }} style={{
+                background: 'rgba(255,255,255,0.04)', color: '#5a6a7a',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '9px', padding: '13px 16px',
+                fontFamily: "'DM Sans', sans-serif", fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}>
                 Cancelar
               </button>
             </div>
