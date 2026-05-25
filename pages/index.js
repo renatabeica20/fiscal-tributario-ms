@@ -1087,17 +1087,30 @@ export default function Home() {
     const inicio = texto.indexOf('===MATERIA_INICIO===')
     const fim = texto.indexOf('===MATERIA_FIM===')
     const eMateria = inicio !== -1 && fim !== -1
-    const textoCopiar = eMateria ? texto.substring(inicio + 20, fim).trim() : texto
+    let textoCopiar = eMateria ? texto.substring(inicio + 20, fim).trim() : texto
 
-    // Detecta tipo e sugestão
-    const tipoSugerido = detectarTipoDocumento(texto) || ''
+    // Remove markdown do texto copiado
+    textoCopiar = textoCopiar
+      .replace(/\*\*(.+?)\*\*/g, '$1')  // negrito
+      .replace(/\*(.+?)\*/g, '$1')       // itálico
+      .replace(/^#{1,3}\s+/gm, '')       // títulos
+      .replace(/^[-*]\s+/gm, '')         // listas
+      .trim()
+
+    // Detecta tipo: usa modoAtivo se disponível, senão detecta pelo texto
+    const tipoModo = modoAtivo === 'tvf' ? 'TVF'
+      : modoAtivo === 'ta' ? 'TA'
+      : modoAtivo === 'contestacao' ? (
+          formContestacao.tipo === 'desk' ? 'DESK' : 'CONTESTACAO'
+        )
+      : detectarTipoDocumento(texto) || ''
+
     const autuadoDoc = extrairAutuado(textoCopiar) || ''
 
-    // Sempre abre popup para salvar
-    setTipoEscolhido(tipoSugerido)
+    setTipoEscolhido(tipoModo)
     setLabelSalvar('')
     setMsgCopiada(msgIdx)
-    setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido })
+    setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido: tipoModo })
   }
 
   const confirmarSalvar = async () => {
@@ -1650,45 +1663,19 @@ export default function Home() {
               Salvar documento
             </h3>
 
-            {/* Seleção do tipo */}
-            <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#7a8a9a', fontSize: '0.8rem', marginBottom: '14px' }}>
-              Selecione o tipo:
-              {popupSalvar?.tipoSugerido && (
-                <span style={{ display: 'block', fontSize: '0.72rem', color: '#c9a84c', marginTop: '4px' }}>
-                  ⚡ Sugerido: {popupSalvar.tipoSugerido}
-                </span>
-              )}
-            </p>
-
-            {/* Linha 1: autuações */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              {['TVF', 'TA', 'ALIM'].map(tipo => (
-                <button key={tipo} onClick={() => setTipoEscolhido(tipo)} style={{
-                  flex: 1, padding: '10px 6px', borderRadius: '8px', cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', fontWeight: 700,
-                  background: tipoEscolhido === tipo ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.04)',
-                  border: tipoEscolhido === tipo ? '2px solid #c9a84c' : '1px solid rgba(255,255,255,0.1)',
-                  color: tipoEscolhido === tipo ? '#c9a84c' : '#5a6a7a',
-                  boxShadow: tipoEscolhido === tipo ? '0 0 12px rgba(201,168,76,0.2)' : 'none',
-                  transition: 'all 0.2s'
-                }}>{tipo}</button>
-              ))}
-            </div>
-            {/* Linha 2: defesas */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              {[
-                { id: 'DESK', label: 'DESK' },
-                { id: 'CONTESTACAO', label: 'CONTESTAÇÃO' }
-              ].map(({ id, label }) => (
-                <button key={id} onClick={() => setTipoEscolhido(id)} style={{
-                  flex: 1, padding: '10px 6px', borderRadius: '8px', cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', fontWeight: 700,
-                  background: tipoEscolhido === id ? 'rgba(80,144,208,0.2)' : 'rgba(255,255,255,0.04)',
-                  border: tipoEscolhido === id ? '2px solid #5090d0' : '1px solid rgba(255,255,255,0.1)',
-                  color: tipoEscolhido === id ? '#5090d0' : '#5a6a7a',
-                  transition: 'all 0.2s'
-                }}>{label}</button>
-              ))}
+            {/* Tipo detectado automaticamente */}
+            <div style={{ marginBottom: '20px' }}>
+              <span style={{
+                display: 'inline-block', padding: '6px 18px', borderRadius: '8px',
+                fontFamily: "'DM Sans', sans-serif", fontSize: '0.9rem', fontWeight: 700,
+                background: ['DESK','CONTESTACAO'].includes(tipoEscolhido)
+                  ? 'rgba(80,144,208,0.2)' : 'rgba(201,168,76,0.2)',
+                border: ['DESK','CONTESTACAO'].includes(tipoEscolhido)
+                  ? '1px solid rgba(80,144,208,0.4)' : '1px solid rgba(201,168,76,0.4)',
+                color: ['DESK','CONTESTACAO'].includes(tipoEscolhido) ? '#5090d0' : '#c9a84c'
+              }}>
+                {tipoEscolhido || '—'}
+              </span>
             </div>
 
             {/* Identificação */}
@@ -1712,21 +1699,15 @@ export default function Home() {
               onKeyDown={e => { if (e.key === 'Enter') confirmarSalvar() }}
             />
 
-            {!tipoEscolhido && (
-              <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#c87070', fontSize: '0.75rem', marginBottom: '12px' }}>
-                ⚠ Selecione o tipo antes de salvar
-              </p>
-            )}
-
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={confirmarSalvar} disabled={!tipoEscolhido} style={{
+              <button onClick={confirmarSalvar} style={{
                 flex: 1,
-                background: tipoEscolhido ? 'linear-gradient(135deg, #b8902a, #c9a84c)' : 'rgba(255,255,255,0.05)',
-                color: tipoEscolhido ? '#0d0f12' : '#3a4a5a',
+                background: 'linear-gradient(135deg, #b8902a, #c9a84c)',
+                color: '#0d0f12',
                 border: 'none', borderRadius: '9px', padding: '13px',
                 fontFamily: "'DM Sans', sans-serif",
                 fontSize: '0.88rem', fontWeight: 700,
-                cursor: tipoEscolhido ? 'pointer' : 'not-allowed',
+                cursor: 'pointer',
                 transition: 'all 0.2s'
               }}>
                 ✓ Salvar e copiar
