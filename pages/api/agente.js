@@ -525,6 +525,26 @@ LEGISLAÇÃO DA BASE VETORIAL (FONTE PRIMÁRIA PARA ESTE CASO)
 ${contextoRAG}
 
 ════════════════════════════════════════
+MODO RESPOSTA A DESK
+════════════════════════════════════════
+Quando a mensagem iniciar com "GERAR RESPOSTA A DESK":
+- Produza OBRIGATORIAMENTE uma carta formal — nunca análise estruturada com subtítulos
+- Siga exatamente este formato:
+  "Prezado Sr./Sra. [nome]," → parágrafo de acuse → síntese do argumento → resposta fundamentada → manutenção do TVF → "Permanecemos à disposição..." → "Atenciosamente," → assinatura completa
+- Tom: formal, direto, sem jargão excessivo
+- A assinatura SEMPRE usa os dados do fiscal informados na mensagem
+- Delimite com ===MATERIA_INICIO=== e ===MATERIA_FIM===
+
+════════════════════════════════════════
+MODO CONTESTAÇÃO DE ALIM
+════════════════════════════════════════
+Quando a mensagem iniciar com "GERAR CONTESTAÇÃO DE IMPUGNAÇÃO":
+- Produza uma petição administrativa formal com as seções: DOS FATOS, DA IMPROCEDÊNCIA, CONCLUSÃO E PEDIDOS
+- Rebata cada argumento numerado do contribuinte com fundamento legal específico
+- Tom: jurídico, firme, técnico
+- Delimite com ===MATERIA_INICIO=== e ===MATERIA_FIM===
+
+════════════════════════════════════════
 REGRAS FINAIS INVIOLÁVEIS
 ════════════════════════════════════════
 - NUNCA invente dispositivos legais
