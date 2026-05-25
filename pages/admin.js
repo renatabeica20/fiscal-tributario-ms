@@ -19,6 +19,8 @@ export default function Admin() {
   const [progresso, setProgresso] = useState([])
   const [limparAntes, setLimparAntes] = useState(false)
   const [pendentes, setPendentes] = useState([])
+  const [logs, setLogs] = useState([])
+  const [periodoLogs, setPeriodoLogs] = useState('7')
   const inputRef = useRef(null)
 
   useEffect(() => { verificarAdmin() }, [])
@@ -36,6 +38,18 @@ export default function Admin() {
     const { data } = await supabase.from('perfis').select('*').order('nome')
     setFiscais(data || [])
     setCarregando(false)
+  }
+
+  const carregarLogs = async (dias) => {
+    setPeriodoLogs(dias)
+    const desde = new Date()
+    desde.setDate(desde.getDate() - parseInt(dias))
+    const { data } = await supabase
+      .from('logs_uso')
+      .select('*')
+      .gte('criado_em', desde.toISOString())
+      .order('criado_em', { ascending: false })
+    setLogs(data || [])
   }
 
   const carregarPendentes = async () => {
@@ -159,7 +173,7 @@ export default function Admin() {
             <p className={styles.subtitulo}>Ferramenta de apoio operacional</p>
           </div>
           <div className={styles.headerAcoes}>
-            <button className={styles.btnVoltar} onClick={() => window.location.href = '/'}>Ir ao agente</button>
+            <button className={styles.btnVoltar} onClick={() => router.push('/')}>Ir ao agente</button>
             <button className={styles.btnSair} onClick={sair}>Sair</button>
           </div>
         </div>
@@ -178,6 +192,9 @@ export default function Admin() {
           </button>
           <button className={`${styles.aba} ${aba === 'pendentes' ? styles.abaAtiva : ''}`} onClick={() => { setAba('pendentes'); carregarPendentes(); setErro(''); setSucesso('') }}>
             ⏳ Solicitações {pendentes.length > 0 ? `(${pendentes.length})` : ''}
+          </button>
+          <button className={`${styles.aba} ${aba === 'uso' ? styles.abaAtiva : ''}`} onClick={() => { setAba('uso'); carregarLogs('7'); setErro(''); setSucesso('') }}>
+            📊 Uso
           </button>
         </div>
 
@@ -257,6 +274,87 @@ export default function Admin() {
             </form>
           </div>
         )}
+
+        {/* ── Monitoramento de uso ── */}
+        {aba === 'uso' && (() => {
+          const porFiscal = {}
+          for (const log of logs) {
+            const nome = log.fiscal_nome || 'Desconhecido'
+            if (!porFiscal[nome]) porFiscal[nome] = { consultas: 0, tokens: 0, custo: 0 }
+            porFiscal[nome].consultas++
+            porFiscal[nome].tokens += (log.tokens_entrada || 0) + (log.tokens_saida || 0)
+            porFiscal[nome].custo += parseFloat(log.custo_estimado || 0)
+          }
+          const totalConsultas = logs.length
+          const totalCusto = logs.reduce((s, l) => s + parseFloat(l.custo_estimado || 0), 0)
+          const totalTokens = logs.reduce((s, l) => s + (l.tokens_entrada || 0) + (l.tokens_saida || 0), 0)
+
+          return (
+            <div className={styles.card}>
+              <h2 className={styles.cardTitulo}>Monitoramento de uso</h2>
+
+              {/* Filtro período */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                {['7', '30', '90'].map(d => (
+                  <button key={d}
+                    onClick={() => carregarLogs(d)}
+                    style={{
+                      padding: '6px 16px', borderRadius: '6px', cursor: 'pointer',
+                      fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem',
+                      background: periodoLogs === d ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.04)',
+                      border: periodoLogs === d ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      color: periodoLogs === d ? '#c9a84c' : '#5a6a7a'
+                    }}
+                  >
+                    {d === '7' ? 'Últimos 7 dias' : d === '30' ? 'Últimos 30 dias' : 'Últimos 90 dias'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Totais */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+                {[
+                  { label: 'Total de consultas', valor: totalConsultas, icone: '💬' },
+                  { label: 'Total de tokens', valor: totalTokens.toLocaleString('pt-BR'), icone: '⚡' },
+                  { label: 'Custo estimado (USD)', valor: `$ ${totalCusto.toFixed(4)}`, icone: '💰' }
+                ].map((item, i) => (
+                  <div key={i} style={{
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,168,76,0.12)',
+                    borderRadius: '10px', padding: '18px', textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{item.icone}</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.4rem', color: '#c9a84c', fontWeight: 700 }}>{item.valor}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: '#3a4a5a', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '4px' }}>{item.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Por fiscal */}
+              {Object.keys(porFiscal).length === 0 ? (
+                <p className={styles.vazio}>Nenhuma consulta no período.</p>
+              ) : (
+                <table className={styles.tabela}>
+                  <thead>
+                    <tr><th>Fiscal</th><th>Consultas</th><th>Tokens</th><th>Custo (USD)</th></tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(porFiscal)
+                      .sort((a, b) => b[1].consultas - a[1].consultas)
+                      .map(([nome, dados]) => (
+                        <tr key={nome}>
+                          <td>{nome}</td>
+                          <td>{dados.consultas}</td>
+                          <td>{dados.tokens.toLocaleString('pt-BR')}</td>
+                          <td>$ {dados.custo.toFixed(4)}</td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )
+        })()}
 
         {/* ── Solicitações pendentes ── */}
         {aba === 'pendentes' && (
