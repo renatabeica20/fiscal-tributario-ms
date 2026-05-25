@@ -41,17 +41,51 @@ function detectarPerguntas(texto) {
   const linhas = texto.split('\n')
   const perguntas = []
   const regex = /^(\d+)\.\s+\*{0,2}(.+?)\*{0,2}$/
+
+  // Só ativa formulário se o texto contiver gatilho explícito de coleta de dados
+  const GATILHOS = [
+    'preciso de mais informações',
+    'preciso das seguintes informações',
+    'para elaborar',
+    'para preencher',
+    'para redigir',
+    'para gerar',
+    'informe os dados',
+    'preencha os campos',
+    'responda as perguntas',
+    'responda as questões',
+    'forneça os dados',
+    'forneça as informações',
+    'me informe',
+    'me forneça',
+    'quais são os dados',
+    'por favor, informe',
+    'por favor, forneça',
+    'para continuar, preciso',
+    'para dar continuidade',
+    'vou precisar dos seguintes dados'
+  ]
+
+  const textoLower = texto.toLowerCase()
+  const temGatilho = GATILHOS.some(g => textoLower.includes(g))
+  if (!temGatilho) return []
+
   for (const linha of linhas) {
     const match = linha.trim().match(regex)
     if (match) {
       const textoPergunta = match[2].trim()
-      perguntas.push({ numero: match[1], texto: textoPergunta, resposta: '', tipo: detectarTipoCampo(textoPergunta) })
+      // Só inclui se for uma pergunta real (termina com ? ou contém palavra interrogativa)
+      const ePergunta = textoPergunta.endsWith('?') ||
+        /\b(qual|quais|informe|digite|forneça|forneca|nome|data|placa|cpf|cnpj|valor|endereço|numero|número)\b/i.test(textoPergunta)
+      if (ePergunta) {
+        perguntas.push({ numero: match[1], texto: textoPergunta, resposta: '', tipo: detectarTipoCampo(textoPergunta) })
+      }
     }
   }
   return perguntas
 }
 
-// Detecta se o texto tem perguntas numeradas (com ou sem gatilho)
+// Detecta se o texto tem perguntas numeradas com gatilho explícito
 function temPerguntas(texto) {
   const perguntas = detectarPerguntas(texto)
   return perguntas.length >= 1
