@@ -85,20 +85,14 @@ export default function App({ Component, pageProps }) {
 
   if (verificando && !ROTAS_PUBLICAS.includes(router.pathname)) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0d2f5e 0%, #1a4a8a 100%)',
-        color: '#fff',
-        fontFamily: 'monospace',
-        fontSize: '0.9rem',
-        letterSpacing: '0.05em'
-      }}>
-        Verificando acesso...
-      </div>
-    )
+  <div style={{
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#080d14',
+  }} />
+)
   }
 
   return (
