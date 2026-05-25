@@ -467,6 +467,9 @@ Elabore a matéria tributária com os dados fornecidos. Estrutura obrigatória e
 Regras de redação:
 - Português formal, sem caixa alta excessiva, sem subtítulos, sem negrito — texto corrido
 - Datas e horas SEMPRE no formato: "24 de abril de 2026, às 14h35min" — nunca por extenso ("vinte e quatro de abril")
+- O fiscal que realiza a abordagem é SEMPRE chamado de "Fiscal da Receita Estadual" — NUNCA "Agente de Fazenda Estadual", "Agente Fiscal" ou qualquer outra denominação
+- Placas de veículo SEMPRE formatadas com hífen: padrão antigo "ABC-1234", padrão Mercosul "ABC-1D23"
+- NUNCA mencione reduções ou sua ausência no texto da matéria tributária — não escreva "não sendo permitida redução" nem "o contribuinte pode se beneficiar de redução" — isso é informação do sistema oficial, não da matéria
 - Cada informação aparece uma única vez
 - Cite apenas artigos das fontes autorizadas (base vetorial ou BASE_LEI)
 - Delimite a matéria com:
