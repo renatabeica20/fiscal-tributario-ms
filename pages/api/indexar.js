@@ -93,14 +93,20 @@ function chunkarBloco(texto, nomeDoc) {
   return chunks
 }
 
+// Trunca texto para no máximo ~6000 caracteres (~7500 tokens), com margem de segurança
+function truncar(texto, maxChars = 6000) {
+  return texto.length > maxChars ? texto.slice(0, maxChars) : texto
+}
+
 async function gerarEmbeddings(textos) {
+  const truncados = textos.map(t => truncar(t))
   const resp = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
     },
-    body: JSON.stringify({ model: 'text-embedding-3-small', input: textos })
+    body: JSON.stringify({ model: 'text-embedding-3-small', input: truncados })
   })
   const data = await resp.json()
   if (!resp.ok) throw new Error(data.error?.message || 'Erro na API OpenAI')
