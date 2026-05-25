@@ -112,8 +112,14 @@ export default function Login() {
           </button>
         </form>
 
-        <p className={styles.rodape}>
-          Acesso restrito · SEFAZ/MS
+        <p className={styles.rodape} style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          <span>Acesso restrito · SEFAZ/MS</span>
+          <button
+            onClick={() => router.push('/cadastro')}
+            style={{ background: 'none', border: 'none', color: '#3a5a7a', cursor: 'pointer', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}
+          >
+            Primeiro acesso? Solicitar cadastro
+          </button>
         </p>
       </div>
     </div>
