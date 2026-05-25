@@ -153,6 +153,54 @@ function agruparPorData(docs) {
 
 // ─── Componentes de formulário ───────────────────────────────────────────────
 
+// Máscaras para os campos dos formulários
+function mascaraCNPJ(v) {
+  v = v.replace(/\D/g, '').substring(0, 14)
+  if (v.length <= 2) return v
+  if (v.length <= 5) return v.replace(/(\d{2})(\d+)/, '$1.$2')
+  if (v.length <= 8) return v.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3')
+  if (v.length <= 12) return v.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4')
+  return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d+)/, '$1.$2.$3/$4-$5')
+}
+
+function mascaraCPF(v) {
+  v = v.replace(/\D/g, '').substring(0, 11)
+  if (v.length <= 3) return v
+  if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, '$1.$2')
+  if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3')
+  return v.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4')
+}
+
+function mascaraIE(v) {
+  // IE do MS: 00.000.000-0
+  v = v.replace(/\D/g, '').substring(0, 9)
+  if (v.length <= 2) return v
+  if (v.length <= 5) return v.replace(/(\d{2})(\d+)/, '$1.$2')
+  if (v.length <= 8) return v.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3')
+  return v.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4')
+}
+
+function mascaraPlaca(v) {
+  v = v.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 7)
+  if (v.length <= 3) return v
+  return v.substring(0, 3) + '-' + v.substring(3)
+}
+
+function mascaraValor(v) {
+  v = v.replace(/\D/g, '')
+  if (!v) return ''
+  const num = parseInt(v, 10) / 100
+  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function mascaraTelefone(v) {
+  v = v.replace(/\D/g, '').substring(0, 11)
+  if (v.length <= 2) return v.length ? `(${v}` : v
+  if (v.length <= 6) return `(${v.substring(0,2)}) ${v.substring(2)}`
+  if (v.length <= 10) return `(${v.substring(0,2)}) ${v.substring(2,6)}-${v.substring(6)}`
+  return `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`
+}
+
 const inputStyle = {
   width: '100%', padding: '10px 14px',
   background: 'rgba(255,255,255,0.04)',
@@ -273,17 +321,17 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         <div style={secaoTituloStyle}>🚛 Veículo e condutor</div>
         <Grid cols={3}>
           <Campo label="Placa *">
-            <input style={inputStyle} value={form.placa} onChange={set('placa')} placeholder="ABC1D23" />
+            <input style={inputStyle} value={form.placa} onChange={e => setForm(f => ({ ...f, placa: mascaraPlaca(e.target.value) }))} placeholder="ABC-1D23" />
           </Campo>
           <Campo label="Nome do motorista *">
             <input style={inputStyle} value={form.motorista} onChange={set('motorista')} placeholder="Nome completo" />
           </Campo>
           <Campo label="CPF do motorista">
-            <input style={inputStyle} value={form.cpf} onChange={set('cpf')} placeholder="000.000.000-00" />
+            <input style={inputStyle} value={form.cpf} onChange={e => setForm(f => ({ ...f, cpf: mascaraCPF(e.target.value) }))} placeholder="000.000.000-00" />
           </Campo>
         </Grid>
         <Campo label="Telefone">
-          <input style={inputStyle} value={form.telefone} onChange={set('telefone')} placeholder="(67) 99999-9999" />
+          <input style={inputStyle} value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: mascaraTelefone(e.target.value) }))} placeholder="(67) 99999-9999" />
         </Campo>
       </div>
 
@@ -295,10 +343,13 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         </Campo>
         <Grid cols={2}>
           <Campo label="IE (Inscrição Estadual)">
-            <input style={inputStyle} value={form.ie} onChange={set('ie')} placeholder="Deixe vazio se não tiver" />
+            <input style={inputStyle} value={form.ie} onChange={e => setForm(f => ({ ...f, ie: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
           </Campo>
           <Campo label="CNPJ / CPF">
-            <input style={inputStyle} value={form.cnpj} onChange={set('cnpj')} placeholder="CNPJ ou CPF" />
+            <input style={inputStyle} value={form.cnpj} onChange={e => {
+              const v = e.target.value.replace(/\D/g, '')
+              setForm(f => ({ ...f, cnpj: v.length <= 11 ? mascaraCPF(v) : mascaraCNPJ(v) }))
+            }} placeholder="00.000.000/0000-00" />
           </Campo>
         </Grid>
         {tipo === 'TA' && (
@@ -335,7 +386,7 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
                 <input style={inputStyle} value={m.unidade} onChange={e => setMerc(i, 'unidade', e.target.value)} placeholder="caixas, kg, m², unidades..." />
               </Campo>
               <Campo label="Valor unitário (R$)">
-                <input style={inputStyle} value={m.valor} onChange={e => setMerc(i, 'valor', e.target.value)} placeholder="0,00" />
+                <input style={inputStyle} value={m.valor} onChange={e => setMerc(i, 'valor', mascaraValor(e.target.value))} placeholder="0,00" />
               </Campo>
             </Grid>
           </div>
@@ -471,10 +522,10 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
         </Campo>
         <Grid cols={2}>
           <Campo label="IE">
-            <input style={inputStyle} value={form.ie_contrib} onChange={set('ie_contrib')} placeholder="Inscrição estadual" />
+            <input style={inputStyle} value={form.ie_contrib} onChange={e => setForm(f => ({ ...f, ie_contrib: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
           </Campo>
           <Campo label="CNPJ">
-            <input style={inputStyle} value={form.cnpj_contrib} onChange={set('cnpj_contrib')} placeholder="CNPJ" />
+            <input style={inputStyle} value={form.cnpj_contrib} onChange={e => setForm(f => ({ ...f, cnpj_contrib: mascaraCNPJ(e.target.value) }))} placeholder="00.000.000/0000-00" />
           </Campo>
         </Grid>
       </div>
