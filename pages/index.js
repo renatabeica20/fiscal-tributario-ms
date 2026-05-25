@@ -738,6 +738,7 @@ export default function Home() {
   const [msgCopiada, setMsgCopiada] = useState(null) // índice da mensagem copiada
   const [modoAtivo, setModoAtivo] = useState(null) // null | 'consulta' | 'tvf' | 'ta' | 'contestacao'
   const [modoOrigem, setModoOrigem] = useState(null) // guarda o modo do formulário original
+  const [bannerFechado, setBannerFechado] = useState(false)
   const [formTVF, setFormTVF] = useState({
     data: '', hora: '', endereco: '', cidade: 'Campo Grande',
     placas: [''], motorista: '', cpf: '', telefone: '',
@@ -1481,7 +1482,7 @@ export default function Home() {
       <div className={styles.chat} ref={chatRef}>
         {mensagens.length === 0 && !modoAtivo && (
           <div style={{ maxWidth: '820px', margin: '32px auto', padding: '0 24px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
               <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.6rem', color: '#c9a84c', fontWeight: 700, marginBottom: '8px' }}>
                 Oráculo Fiscal MS
               </h2>
@@ -1489,6 +1490,90 @@ export default function Home() {
                 Selecione o que deseja fazer
               </p>
             </div>
+
+            {/* Banner de orientação */}
+            {!bannerFechado && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(13,26,46,0.6) 100%)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderLeft: '3px solid #c9a84c',
+                borderRadius: '12px',
+                padding: '20px 24px',
+                marginBottom: '24px',
+                position: 'relative'
+              }}>
+                <button
+                  onClick={() => setBannerFechado(true)}
+                  style={{
+                    position: 'absolute', top: '12px', right: '14px',
+                    background: 'none', border: 'none', color: '#3a4a5a',
+                    cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
+                    padding: '2px 6px'
+                  }}
+                  title="Fechar"
+                >✕</button>
+
+                <p style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: '1rem', color: '#c9a84c', fontWeight: 600,
+                  marginBottom: '12px', letterSpacing: '0.02em'
+                }}>
+                  📖 Como usar o Oráculo Fiscal MS
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  {[
+                    {
+                      icone: '🔍',
+                      titulo: 'Consultar legislação',
+                      texto: 'Tire dúvidas sobre a legislação tributária estadual, alíquotas, enquadramentos, prazos e procedimentos. O Oráculo consulta a base vetorial da legislação do MS e responde com fundamento legal.'
+                    },
+                    {
+                      icone: '📋',
+                      titulo: 'Gerar TVF ou TA',
+                      texto: 'Preencha o formulário com os dados da abordagem — veículo, motorista, sujeito passivo, mercadoria e infração. O Oráculo gera a matéria tributária completa, pronta para copiar no sistema oficial da SEFAZ.'
+                    },
+                    {
+                      icone: '⚖️',
+                      titulo: 'Contestação / DESK',
+                      texto: 'Cole o texto da impugnação ou reclamação do contribuinte. Anexe o texto do TVF/TA para dar mais contexto. O Oráculo gera a resposta em defesa do fisco, rebatendo os argumentos com base na legislação estadual.'
+                    },
+                    {
+                      icone: '📋',
+                      titulo: 'Histórico de documentos',
+                      texto: 'Acesse seus documentos anteriores pelo ícone 📋 no topo. TVF e TA ficam na aba "TVF / TA". Contestações e respostas a DESK ficam em "Contestação / DESK". Clique no nome para editar a identificação.'
+                    }
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      borderRadius: '8px', padding: '14px'
+                    }}>
+                      <p style={{
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: '0.78rem', fontWeight: 600,
+                        color: '#c8c0b0', marginBottom: '6px'
+                      }}>
+                        {item.icone} {item.titulo}
+                      </p>
+                      <p style={{
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: '0.74rem', color: '#4a5a6a', lineHeight: 1.65
+                      }}>
+                        {item.texto}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <p style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: '0.7rem', color: '#3a4a5a',
+                  marginTop: '14px', textAlign: 'center', letterSpacing: '0.04em'
+                }}>
+                  📎 Em qualquer modo, você pode anexar fotos de documentos, NFs, CNH e CRLV usando o ícone de clipe
+                </p>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
               {[
