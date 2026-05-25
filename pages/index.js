@@ -1103,19 +1103,27 @@ export default function Home() {
       : modoAtivo === 'contestacao' ? (
           formContestacao.tipo === 'desk' ? 'DESK' : 'CONTESTACAO'
         )
-      : detectarTipoDocumento(texto) || ''
+      : (() => {
+          // No chat livre, detecta pelo conteúdo
+          const detectado = detectarTipoDocumento(texto)
+          if (detectado) return detectado
+          // Heurística para DESK e CONTESTACAO
+          const t = texto.toUpperCase()
+          if (t.includes('PREZADO') || t.includes('ACUSAMOS O RECEBIMENTO') || t.includes('DESK')) return 'DESK'
+          if (t.includes('IMPUGNAÇÃO') || t.includes('IMPUGNACAO') || t.includes('JULGADOR')) return 'CONTESTACAO'
+          return 'TVF'
+        })()
 
     const autuadoDoc = extrairAutuado(textoCopiar) || ''
 
     setTipoEscolhido(tipoModo)
     setLabelSalvar('')
-    setMsgCopiada(msgIdx)
-    setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido: tipoModo })
+    setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido: tipoModo, msgIdx })
   }
 
   const confirmarSalvar = async () => {
     if (!popupSalvar) return
-    const { textoCopiar } = popupSalvar
+    const { textoCopiar, msgIdx: idxSalvo } = popupSalvar
     // Copiar para clipboard
     try {
       await navigator.clipboard.writeText(textoCopiar)
@@ -1140,6 +1148,7 @@ export default function Home() {
     setPopupSalvar(null)
     setLabelSalvar('')
     setTipoEscolhido('')
+    setMsgCopiada(idxSalvo ?? null)
     // Limpar conversa
     setTimeout(() => {
       setMensagens([])
