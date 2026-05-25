@@ -53,19 +53,33 @@ export default function Admin() {
   }
 
   const carregarPendentes = async () => {
-    const { data } = await supabase.from('perfis').select('*').eq('status', 'pendente').order('criado_em')
-    setPendentes(data || [])
+    const { data: { session } } = await supabase.auth.getSession()
+    const resp = await fetch('/api/pendentes', {
+      headers: { Authorization: `Bearer ${session?.access_token}` }
+    })
+    const data = await resp.json()
+    setPendentes(data.pendentes || [])
   }
 
   const aprovar = async (fiscal) => {
-    await supabase.from('perfis').update({ status: 'aprovado', ativo: true }).eq('id', fiscal.id)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch('/api/pendentes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ id: fiscal.id, acao: 'aprovar' })
+    })
     setSucesso(`${fiscal.nome} aprovado com sucesso.`)
     carregarPendentes()
     carregarFiscais()
   }
 
   const rejeitar = async (fiscal) => {
-    await supabase.from('perfis').update({ status: 'rejeitado', ativo: false }).eq('id', fiscal.id)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch('/api/pendentes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ id: fiscal.id, acao: 'rejeitar' })
+    })
     setSucesso(`Solicitação de ${fiscal.nome} rejeitada.`)
     carregarPendentes()
   }
