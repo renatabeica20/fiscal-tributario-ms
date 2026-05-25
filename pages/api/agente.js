@@ -6,13 +6,62 @@ export const config = {
   },
 }
 
+import { createClient } from '@supabase/supabase-js'
+
+// Rate limiting em memória (reseta com cada deploy, suficiente para proteção básica)
+const rateLimitMap = new Map()
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minuto
+const RATE_LIMIT_MAX = 20 // máx 20 requisições por minuto por usuário
+
+function checkRateLimit(userId) {
+  const now = Date.now()
+  const entry = rateLimitMap.get(userId) || { count: 0, start: now }
+  if (now - entry.start > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(userId, { count: 1, start: now })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false
+  rateLimitMap.set(userId, { ...entry, count: entry.count + 1 })
+  return true
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' })
   }
 
+  // ── Autenticação obrigatória ──────────────────────────────────────────────
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
+
+  const authHeader = req.headers.authorization
+  const token = authHeader?.replace('Bearer ', '') || req.body?.token
+  if (!token) return res.status(401).json({ error: 'Não autorizado' })
+
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+  if (authError || !user) return res.status(401).json({ error: 'Token inválido' })
+
+  // Verifica se fiscal está ativo e aprovado
+  const { data: perfil } = await supabaseAdmin
+    .from('perfis').select('ativo, status').eq('id', user.id).single()
+  if (!perfil?.ativo || perfil?.status !== 'aprovado') {
+    return res.status(403).json({ error: 'Acesso não autorizado' })
+  }
+
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  if (!checkRateLimit(user.id)) {
+    return res.status(429).json({ error: 'Muitas requisições. Aguarde um momento.' })
+  }
+
   const { mensagem, historico, imagens } = req.body
   if (!mensagem && (!imagens || imagens.length === 0)) return res.status(400).json({ error: 'Mensagem ou imagem obrigatória' })
+
+  // Limite de tamanho da mensagem
+  if (mensagem && mensagem.length > 10000) {
+    return res.status(400).json({ error: 'Mensagem muito longa.' })
+  }
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
   const OPENAI_KEY    = process.env.OPENAI_API_KEY
