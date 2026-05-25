@@ -726,7 +726,7 @@ export default function Home() {
           </div>
           <div className={styles.headerUsuario}>
             <button className={styles.btnHistorico} onClick={abrirHistorico} title="Histórico de documentos">📋</button>
-            <span className={styles.nomeUsuario} style={{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",fontWeight:500,letterSpacing:"0.01em"}}>Olá, {fiscal.nome}</span>
+            <span className={styles.nomeUsuario} style={{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",fontWeight:500,letterSpacing:"0.01em"}}>Olá, Fiscal {fiscal.nome}</span>
             {fiscal.cargo === 'Administrador' && (
               <button className={styles.btnAdmin} onClick={() => router.push('/admin')}>Admin</button>
             )}
