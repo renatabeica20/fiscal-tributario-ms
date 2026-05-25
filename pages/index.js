@@ -416,9 +416,13 @@ export default function Home() {
     const novoHistorico = [...historico, novaMsgUser]
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const resp = await fetch('/api/agente', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`
+        },
         body: JSON.stringify({
           mensagem: msg,
           historico,
