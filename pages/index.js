@@ -564,66 +564,18 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
         </Grid>
       </div>
 
-      {/* Upload do TVF/TA */}
+      {/* Texto do TVF/TA */}
       <div style={secaoStyle}>
         <div style={secaoTituloStyle}>📄 TVF / TA original (opcional)</div>
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#4a5a6a', marginBottom: '12px' }}>
-          Anexe o PDF do TVF ou TA autuado. O Oráculo terá acesso completo aos fatos e fundamentação para gerar uma resposta mais precisa.
+          Cole aqui o texto do TVF ou TA autuado. O Oráculo terá acesso completo aos fatos e fundamentação para gerar uma resposta mais precisa.
         </p>
-
-        {!form.texto_tvf ? (
-          <div>
-            <input
-              type="file"
-              accept=".pdf"
-              id="upload-tvf"
-              style={{ display: 'none' }}
-              onChange={async (e) => {
-                const arquivo = e.target.files?.[0]
-                if (!arquivo) return
-                setExtraindoPDF(true)
-                setNomePDF(arquivo.name)
-                try {
-                  const { data: { session } } = await supabase.auth.getSession()
-                  const fd = new FormData()
-                  fd.append('pdf', arquivo)
-                  const resp = await fetch('/api/extrair-pdf', {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${session?.access_token}` },
-                    body: fd
-                  })
-                  const data = await resp.json()
-                  if (!resp.ok) throw new Error(data.error)
-                  setForm(f => ({ ...f, texto_tvf: data.texto }))
-                } catch (err) {
-                  alert('Erro ao extrair PDF: ' + err.message)
-                  setNomePDF('')
-                } finally {
-                  setExtraindoPDF(false)
-                }
-              }}
-            />
-            <label htmlFor="upload-tvf" style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '10px 20px', borderRadius: '8px', cursor: 'pointer',
-              background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)',
-              color: '#c9a84c', fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem'
-            }}>
-              {extraindoPDF ? '⏳ Extraindo texto...' : '📎 Selecionar PDF do TVF/TA'}
-            </label>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: 'rgba(50,160,80,0.08)', border: '1px solid rgba(50,160,80,0.2)', borderRadius: '8px' }}>
-            <span style={{ color: '#50c878', fontSize: '1rem' }}>✓</span>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem', color: '#50c878', flex: 1 }}>
-              {nomePDF} — texto extraído com sucesso
-            </span>
-            <button onClick={() => { setForm(f => ({ ...f, texto_tvf: '' })); setNomePDF('') }}
-              style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '0.8rem' }}>
-              Remover
-            </button>
-          </div>
-        )}
+        <textarea
+          style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
+          value={form.texto_tvf}
+          onChange={e => setForm(f => ({ ...f, texto_tvf: e.target.value }))}
+          placeholder="Cole aqui o texto da matéria tributária do TVF ou TA..."
+        />
       </div>
 
       <div style={secaoStyle}>
@@ -810,8 +762,7 @@ export default function Home() {
     texto_tvf: '', // texto extraído do PDF do TVF/TA
     texto_contribuinte: ''
   })
-  const [extraindoPDF, setExtraindoPDF] = useState(false)
-  const [nomePDF, setNomePDF] = useState('')
+
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [datasExpandidas, setDatasExpandidas] = useState({})
