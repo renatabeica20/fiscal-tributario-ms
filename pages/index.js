@@ -167,6 +167,7 @@ export default function Home() {
   const [popupSalvar, setPopupSalvar] = useState(null) // { texto, textoCopiar }
   const [confirmarExclusao, setConfirmarExclusao] = useState(null) // doc a excluir
   const [labelSalvar, setLabelSalvar] = useState('')
+  const [tipoEscolhido, setTipoEscolhido] = useState('')
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [datasExpandidas, setDatasExpandidas] = useState({})
@@ -490,11 +491,11 @@ export default function Home() {
     const eMateria = inicio !== -1 && fim !== -1
     const textoCopiar = eMateria ? texto.substring(inicio + 20, fim).trim() : texto
     if (eMateria) {
-      // Pré-preencher com tipo + autuado detectados
-      const tipoDoc = detectarTipoDocumento(texto) || ''
+      const tipoSugerido = detectarTipoDocumento(texto) || ''
       const autuadoDoc = extrairAutuado(textoCopiar) || ''
-      setLabelSalvar(tipoDoc ? `${tipoDoc} - ` : '')
-      setPopupSalvar({ textoCopiar, autuado: autuadoDoc })
+      setTipoEscolhido(tipoSugerido) // sugestão do agente, fiscal pode mudar
+      setLabelSalvar('')
+      setPopupSalvar({ textoCopiar, autuado: autuadoDoc, tipoSugerido })
     } else {
       navigator.clipboard.writeText(textoCopiar)
     }
@@ -512,7 +513,7 @@ export default function Home() {
     }
     // Salvar no banco com label do fiscal
     if (fiscal) {
-      const tipo = detectarTipoDocumento(textoCopiar) || 'TVF'
+      const tipo = tipoEscolhido || 'TVF'
       await supabase.from('historico_documentos').upsert({
         fiscal_id: fiscal.id,
         tipo,
@@ -854,51 +855,99 @@ export default function Home() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }} onClick={() => setPopupSalvar(null)}>
           <div style={{
-            background: '#fff', borderRadius: '16px', padding: '32px 28px',
-            maxWidth: '420px', width: '100%', textAlign: 'center',
-            boxShadow: '0 24px 60px rgba(6,26,54,0.4)', borderTop: '4px solid #e8a000'
+            background: '#0e1620', borderRadius: '16px', padding: '32px 28px',
+            maxWidth: '440px', width: '100%', textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+            border: '1px solid rgba(201,168,76,0.2)',
+            borderTop: '3px solid #c9a84c'
           }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💾</div>
-            <h3 style={{ color: '#0d2f5e', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>
-              Salvar e copiar documento
+            <h3 style={{ color: '#c9a84c', fontFamily: "'Cormorant Garamond', serif", fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
+              Salvar documento
             </h3>
-            <p style={{ color: '#546e7a', fontSize: '0.82rem', marginBottom: '20px', lineHeight: 1.5 }}>
-              Como quer identificar este documento no histórico?<br/>
-              <span style={{ fontSize: '0.75rem', color: '#90a4ae' }}>Ex: TVF - Fato 593, TA - Mercadoria sem NF</span>
+
+            {/* Seleção obrigatória do tipo pelo fiscal */}
+            <p style={{ color: '#7a8a9a', fontSize: '0.8rem', marginBottom: '14px', lineHeight: 1.5 }}>
+              Selecione o tipo de documento:
+              {popupSalvar?.tipoSugerido && (
+                <span style={{ display: 'block', fontSize: '0.72rem', color: '#c9a84c', marginTop: '4px' }}>
+                  ⚡ Agente sugeriu: {popupSalvar.tipoSugerido}
+                </span>
+              )}
+            </p>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'center' }}>
+              {['TVF', 'TA', 'ALIM'].map(tipo => (
+                <button
+                  key={tipo}
+                  onClick={() => setTipoEscolhido(tipo)}
+                  style={{
+                    flex: 1, padding: '12px 8px',
+                    borderRadius: '8px', cursor: 'pointer',
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '0.88rem', fontWeight: 700,
+                    transition: 'all 0.2s',
+                    background: tipoEscolhido === tipo ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.04)',
+                    border: tipoEscolhido === tipo ? '2px solid #c9a84c' : '1px solid rgba(255,255,255,0.1)',
+                    color: tipoEscolhido === tipo ? '#c9a84c' : '#5a6a7a',
+                    boxShadow: tipoEscolhido === tipo ? '0 0 12px rgba(201,168,76,0.2)' : 'none'
+                  }}
+                >
+                  {tipo}
+                </button>
+              ))}
+            </div>
+
+            <p style={{ color: '#7a8a9a', fontSize: '0.78rem', marginBottom: '10px' }}>
+              Identificação no histórico (opcional):
             </p>
             <input
               type="text"
               value={labelSalvar}
               onChange={e => setLabelSalvar(e.target.value)}
-              placeholder="Ex: TVF - Fato 593"
+              placeholder="Ex: Fato 593 - Bebidas sem NF"
               autoFocus
               style={{
-                width: '100%', padding: '11px 14px', border: '2px solid #b0c4de',
-                borderRadius: '9px', fontSize: '0.92rem', color: '#0d2f5e',
+                width: '100%', padding: '11px 14px',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderRadius: '9px', fontSize: '0.9rem', color: '#c8c0b0',
+                background: 'rgba(255,255,255,0.04)',
                 outline: 'none', boxSizing: 'border-box', marginBottom: '20px',
-                fontFamily: 'inherit', transition: 'border-color 0.2s'
+                fontFamily: "'DM Sans', sans-serif"
               }}
-              onFocus={e => e.target.style.borderColor = '#1a4a8a'}
-              onBlur={e => e.target.style.borderColor = '#b0c4de'}
               onKeyDown={e => { if (e.key === 'Enter') confirmarSalvar() }}
             />
+
+            {!tipoEscolhido && (
+              <p style={{ color: '#c87070', fontSize: '0.75rem', marginBottom: '12px' }}>
+                ⚠ Selecione TVF ou TA antes de salvar
+              </p>
+            )}
+
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 onClick={confirmarSalvar}
+                disabled={!tipoEscolhido}
                 style={{
-                  flex: 1, background: 'linear-gradient(135deg, #1a4a8a, #0d2f5e)',
-                  color: '#fff', border: 'none', borderRadius: '9px', padding: '12px',
-                  fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer'
+                  flex: 1,
+                  background: tipoEscolhido ? 'linear-gradient(135deg, #b8902a, #c9a84c)' : 'rgba(255,255,255,0.05)',
+                  color: tipoEscolhido ? '#0d0f12' : '#3a4a5a',
+                  border: 'none', borderRadius: '9px', padding: '13px',
+                  fontSize: '0.88rem', fontWeight: 700,
+                  cursor: tipoEscolhido ? 'pointer' : 'not-allowed',
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: 'all 0.2s'
                 }}
               >
                 ✓ Salvar e copiar
               </button>
               <button
-                onClick={() => setPopupSalvar(null)}
+                onClick={() => { setPopupSalvar(null); setTipoEscolhido('') }}
                 style={{
-                  background: '#f0f4f8', color: '#546e7a', border: '1px solid #c3d0e0',
-                  borderRadius: '9px', padding: '12px 16px', fontSize: '0.85rem',
-                  cursor: 'pointer'
+                  background: 'rgba(255,255,255,0.04)', color: '#5a6a7a',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '9px', padding: '13px 16px', fontSize: '0.85rem',
+                  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif"
                 }}
               >
                 Cancelar
