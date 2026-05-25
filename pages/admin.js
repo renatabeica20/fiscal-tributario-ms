@@ -159,7 +159,7 @@ export default function Admin() {
             <p className={styles.subtitulo}>Ferramenta de apoio operacional</p>
           </div>
           <div className={styles.headerAcoes}>
-            <button className={styles.btnVoltar} onClick={() => router.push('/')}>Ir ao agente</button>
+            <button className={styles.btnVoltar} onClick={() => window.location.href = '/'}>Ir ao agente</button>
             <button className={styles.btnSair} onClick={sair}>Sair</button>
           </div>
         </div>
