@@ -1481,7 +1481,7 @@ export default function Home() {
       {/* CHAT */}
       <div className={styles.chat} ref={chatRef}>
         {mensagens.length === 0 && !modoAtivo && (
-          <div style={{ maxWidth: '820px', margin: '32px auto', padding: '0 24px' }}>
+          <div style={{ maxWidth: '820px', margin: '32px auto', padding: '0 24px', position: 'relative' }}>
             <div style={{ textAlign: 'center', marginBottom: '28px' }}>
               <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.6rem', color: '#c9a84c', fontWeight: 700, marginBottom: '8px' }}>
                 Oráculo Fiscal MS
@@ -1491,89 +1491,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Banner de orientação */}
-            {!bannerFechado && (
-              <div style={{
-                background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(13,26,46,0.6) 100%)',
-                border: '1px solid rgba(201,168,76,0.2)',
-                borderLeft: '3px solid #c9a84c',
-                borderRadius: '12px',
-                padding: '20px 24px',
-                marginBottom: '24px',
-                position: 'relative'
-              }}>
-                <button
-                  onClick={() => setBannerFechado(true)}
-                  style={{
-                    position: 'absolute', top: '12px', right: '14px',
-                    background: 'none', border: 'none', color: '#3a4a5a',
-                    cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
-                    padding: '2px 6px'
-                  }}
-                  title="Fechar"
-                >✕</button>
 
-                <p style={{
-                  fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: '1rem', color: '#c9a84c', fontWeight: 600,
-                  marginBottom: '12px', letterSpacing: '0.02em'
-                }}>
-                  📖 Como usar o Oráculo Fiscal MS
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  {[
-                    {
-                      icone: '🔍',
-                      titulo: 'Consultar legislação',
-                      texto: 'Tire dúvidas sobre a legislação tributária estadual, alíquotas, enquadramentos, prazos e procedimentos. O Oráculo consulta a base vetorial da legislação do MS e responde com fundamento legal.'
-                    },
-                    {
-                      icone: '📋',
-                      titulo: 'Gerar TVF ou TA',
-                      texto: 'Preencha o formulário com os dados da abordagem — veículo, motorista, sujeito passivo, mercadoria e infração. O Oráculo gera a matéria tributária completa, pronta para copiar no sistema oficial da SEFAZ.'
-                    },
-                    {
-                      icone: '⚖️',
-                      titulo: 'Contestação / DESK',
-                      texto: 'Cole o texto da impugnação ou reclamação do contribuinte. Anexe o texto do TVF/TA para dar mais contexto. O Oráculo gera a resposta em defesa do fisco, rebatendo os argumentos com base na legislação estadual.'
-                    },
-                    {
-                      icone: '📋',
-                      titulo: 'Histórico de documentos',
-                      texto: 'Acesse seus documentos anteriores pelo ícone 📋 no topo. TVF e TA ficam na aba "TVF / TA". Contestações e respostas a DESK ficam em "Contestação / DESK". Clique no nome para editar a identificação.'
-                    }
-                  ].map((item, i) => (
-                    <div key={i} style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      borderRadius: '8px', padding: '14px'
-                    }}>
-                      <p style={{
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontSize: '0.78rem', fontWeight: 600,
-                        color: '#c8c0b0', marginBottom: '6px'
-                      }}>
-                        {item.icone} {item.titulo}
-                      </p>
-                      <p style={{
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontSize: '0.74rem', color: '#4a5a6a', lineHeight: 1.65
-                      }}>
-                        {item.texto}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <p style={{
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: '0.7rem', color: '#3a4a5a',
-                  marginTop: '14px', textAlign: 'center', letterSpacing: '0.04em'
-                }}>
-                  📎 Em qualquer modo, você pode anexar fotos de documentos, NFs, CNH e CRLV usando o ícone de clipe
-                </p>
-              </div>
-            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
               {[
@@ -1620,6 +1538,104 @@ export default function Home() {
               📎 Você pode anexar fotos de documentos, NFs, CNH e CRLV em qualquer modo
             </p>
           </div>
+
+          {/* Overlay de boas-vindas */}
+          {!bannerFechado && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 10,
+              background: 'rgba(8,13,20,0.88)',
+              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '2rem'
+            }}>
+              {/* Botão fechar */}
+              <button
+                onClick={() => setBannerFechado(true)}
+                style={{
+                  position: 'absolute', top: '16px', right: '16px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px', color: '#5a6a7a',
+                  fontSize: '1.1rem', width: '36px', height: '36px',
+                  cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center'
+                }}
+              >✕</button>
+
+              <div style={{ width: '100%', maxWidth: '600px' }}>
+                {/* Logo */}
+                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                  <p style={{
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontSize: '26px', fontWeight: 700, color: '#c9a84c',
+                    letterSpacing: '0.03em'
+                  }}>⚖️ Oráculo Fiscal MS</p>
+                  <div style={{ width: '56px', height: '1px', background: '#c9a84c', margin: '12px auto', opacity: 0.4 }} />
+                  <p style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '15px', color: '#5a6a7a', lineHeight: 1.7
+                  }}>
+                    Ferramenta de apoio à fiscalização tributária do Estado de Mato Grosso do Sul.<br />
+                    Selecione o modo de uso abaixo para começar.
+                  </p>
+                </div>
+
+                {/* Grid de funções */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
+                  {[
+                    { icone: '🔍', titulo: 'Consultar legislação', texto: 'Tire dúvidas sobre a legislação tributária estadual — alíquotas, enquadramentos, prazos e procedimentos, com fundamento legal.' },
+                    { icone: '📋', titulo: 'Gerar TVF ou TA', texto: 'Preencha o formulário da abordagem e o Oráculo gera a matéria tributária completa, pronta para copiar no sistema da SEFAZ.' },
+                    { icone: '⚖️', titulo: 'Contestação / DESK', texto: 'Cole o texto do contribuinte e o Oráculo gera a resposta em defesa do fisco, rebatendo os argumentos com base na legislação estadual.' },
+                    { icone: '📋', titulo: 'Histórico', texto: 'Acesse documentos anteriores pelo ícone no topo. TVF/TA e Contestação/DESK ficam em abas separadas. Clique no nome para editar.' }
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(201,168,76,0.06)',
+                      border: '1px solid rgba(201,168,76,0.15)',
+                      borderRadius: '10px', padding: '18px'
+                    }}>
+                      <p style={{
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: '15px', fontWeight: 600,
+                        color: '#c9a84c', marginBottom: '8px'
+                      }}>
+                        {item.icone} {item.titulo}
+                      </p>
+                      <p style={{
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: '14px', color: '#5a6a7a', lineHeight: 1.65
+                      }}>
+                        {item.texto}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Botão entrar */}
+                <button
+                  onClick={() => setBannerFechado(true)}
+                  style={{
+                    width: '100%', padding: '14px',
+                    background: 'linear-gradient(135deg, #b8902a, #c9a84c)',
+                    color: '#0d0f12', border: 'none', borderRadius: '10px',
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '15px', fontWeight: 600,
+                    cursor: 'pointer', letterSpacing: '0.06em',
+                    marginBottom: '1rem'
+                  }}
+                >
+                  Entrar no sistema
+                </button>
+
+                <p style={{
+                  textAlign: 'center', fontFamily: "'DM Sans', sans-serif",
+                  fontSize: '13px', color: '#3a4a5a',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                }}>
+                  📎 Anexe fotos de documentos, NFs, CNH e CRLV usando o ícone de clipe
+                </p>
+              </div>
+            </div>
+          )}
         )}
 
         {/* MODO CONSULTA — ativa chat direto */}
