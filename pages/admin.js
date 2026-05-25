@@ -97,6 +97,7 @@ export default function Admin() {
       const formData = new FormData()
       formData.append('arquivo', arq)
       formData.append('nome', nomeBase)
+      formData.append('token', token)
       formData.append('limpar', limparAntes ? 'true' : 'false')
 
       try {
