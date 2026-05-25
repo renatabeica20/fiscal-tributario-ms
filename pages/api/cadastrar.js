@@ -21,6 +21,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'A senha deve ter pelo menos 8 caracteres.' })
   }
 
+  // Valida domínio de email institucional
+  const DOMINIOS_PERMITIDOS = ['sefaz.ms.gov.br', 'fazenda.ms.gov.br', 'ms.gov.br']
+  const dominio = email.trim().split('@')[1]?.toLowerCase()
+  if (!dominio || !DOMINIOS_PERMITIDOS.some(d => dominio === d || dominio.endsWith('.' + d))) {
+    return res.status(400).json({ error: 'Use seu email institucional (@sefaz.ms.gov.br ou @ms.gov.br).' })
+  }
+
+  // Validações básicas anti-spam
+  if (nome.trim().length < 5) {
+    return res.status(400).json({ error: 'Nome muito curto.' })
+  }
+  if (nome.trim().length > 100) {
+    return res.status(400).json({ error: 'Nome muito longo.' })
+  }
+
   // Verifica se email já existe
   const { data: existente } = await supabaseAdmin
     .from('perfis')
