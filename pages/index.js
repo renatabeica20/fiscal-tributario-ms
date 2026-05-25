@@ -737,6 +737,7 @@ export default function Home() {
   const [tipoEscolhido, setTipoEscolhido] = useState('')
   const [msgCopiada, setMsgCopiada] = useState(null) // índice da mensagem copiada
   const [modoAtivo, setModoAtivo] = useState(null) // null | 'consulta' | 'tvf' | 'ta' | 'contestacao'
+  const [modoOrigem, setModoOrigem] = useState(null) // guarda o modo do formulário original
   const [formTVF, setFormTVF] = useState({
     data: '', hora: '', endereco: '', cidade: 'Campo Grande',
     placas: [''], motorista: '', cpf: '', telefone: '',
@@ -1097,20 +1098,18 @@ export default function Home() {
       .replace(/^[-*]\s+/gm, '')         // listas
       .trim()
 
-    // Detecta tipo: usa modoAtivo se disponível, senão detecta pelo texto
-    const tipoModo = modoAtivo === 'tvf' ? 'TVF'
-      : modoAtivo === 'ta' ? 'TA'
-      : modoAtivo === 'contestacao' ? (
-          formContestacao.tipo === 'desk' ? 'DESK' : 'CONTESTACAO'
-        )
+    // Detecta tipo: usa modoOrigem (contexto do formulário) se disponível
+    const tipoModo = modoOrigem === 'tvf' ? 'TVF'
+      : modoOrigem === 'ta' ? 'TA'
+      : modoOrigem === 'desk' ? 'DESK'
+      : modoOrigem === 'contestacao' ? 'CONTESTACAO'
       : (() => {
           // No chat livre, detecta pelo conteúdo
           const detectado = detectarTipoDocumento(texto)
           if (detectado) return detectado
-          // Heurística para DESK e CONTESTACAO
           const t = texto.toUpperCase()
-          if (t.includes('PREZADO') || t.includes('ACUSAMOS O RECEBIMENTO') || t.includes('DESK')) return 'DESK'
-          if (t.includes('IMPUGNAÇÃO') || t.includes('IMPUGNACAO') || t.includes('JULGADOR')) return 'CONTESTACAO'
+          if (t.includes('PREZADO') || t.includes('ACUSAMOS O RECEBIMENTO')) return 'DESK'
+          if (t.includes('IMPUGNAÇÃO') || t.includes('JULGADOR')) return 'CONTESTACAO'
           return 'TVF'
         })()
 
@@ -1182,6 +1181,7 @@ export default function Home() {
     setHistorico([])
     setRespostasAtivas({})
     setModoAtivo(null)
+    setModoOrigem(null)
     if (sessaoIdRef.current) {
       await supabase
         .from('sessoes_chat')
@@ -1514,6 +1514,7 @@ export default function Home() {
             onVoltar={() => setModoAtivo(null)}
             onGerar={() => {
               const msg = montarMensagemTVF(formTVF)
+              setModoOrigem('tvf')
               setModoAtivo('consulta')
               enviar(msg)
             }}
@@ -1529,6 +1530,7 @@ export default function Home() {
             onVoltar={() => setModoAtivo(null)}
             onGerar={() => {
               const msg = montarMensagemTA(formTA)
+              setModoOrigem('ta')
               setModoAtivo('consulta')
               enviar(msg)
             }}
@@ -1543,6 +1545,7 @@ export default function Home() {
             onVoltar={() => setModoAtivo(null)}
             onGerar={() => {
               const msg = montarMensagemContestacao(formContestacao, fiscal)
+              setModoOrigem(formContestacao.tipo === 'desk' ? 'desk' : 'contestacao')
               setModoAtivo('consulta')
               enviar(msg)
             }}
