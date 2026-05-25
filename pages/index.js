@@ -724,6 +724,11 @@ export default function Home() {
             <span className={styles.fontLabel}>{fontSize}px</span>
             <button className={styles.btnFont} onClick={() => setFontSize(f => Math.min(FONT_MAX, f + 1))} disabled={fontSize >= FONT_MAX}>A+</button>
           </div>
+          {mensagens.length > 0 && (
+            <button onClick={novaConversa} className={styles.btnHistorico} title="Nova conversa" style={{ fontSize: '0.72rem', padding: '5px 12px', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+              + Nova
+            </button>
+          )}
           <div className={styles.headerUsuario}>
             <button className={styles.btnHistorico} onClick={abrirHistorico} title="Histórico de documentos">📋</button>
             <span className={styles.nomeUsuario} style={{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",fontWeight:500,letterSpacing:"0.01em"}}>Olá, Fiscal {fiscal.nome}</span>
@@ -743,16 +748,6 @@ export default function Home() {
             <p>Especialista em legislação tributária do Estado de Mato Grosso do Sul.<br />
             Análise de casos, enquadramento legal e elaboração de documentos fiscais.<br />
             <span style={{ fontSize: '0.8rem', color: '#90a4ae' }}>Você pode anexar fotos de documentos, NFs, CNH e CRLV usando o ícone 📎.</span></p>
-          </div>
-        )}
-
-        {mensagens.length > 0 && (
-          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-            <button onClick={novaConversa} style={{
-              background: 'transparent', border: '1px solid #c3d0e0', borderRadius: '20px',
-              padding: '4px 14px', fontSize: '0.72rem', color: '#546e7a', cursor: 'pointer',
-              fontFamily: 'monospace'
-            }}>+ Nova conversa</button>
           </div>
         )}
 
