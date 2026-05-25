@@ -1,129 +1,251 @@
+/* Login.module.css — Oráculo Fiscal MS */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── Fundo ── */
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0d2f5e 0%, #1a4a8a 60%, #1e56a0 100%);
+  background: #080d14;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-.card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 40px 36px;
+/* ── Orbs decorativos ── */
+.orb1 {
+  position: absolute;
+  top: -120px;
+  left: -120px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(180,140,40,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orb2 {
+  position: absolute;
+  bottom: -80px;
+  right: -80px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(13,47,94,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orb3 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(180,140,40,0.03) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ── Container principal ── */
+.container {
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  animation: fadeUp 0.6s ease both;
 }
 
-.logo {
-  width: 56px;
-  height: 56px;
-  background: #1a4a8a;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: #ffffff;
-  margin: 0 auto 16px;
-  box-shadow: 0 4px 12px rgba(26,74,138,0.3);
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.logoImg {
-  margin: 0 auto 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 6px 20px rgba(13, 47, 94, 0.3));
+/* ── Logo ── */
+.logoWrap {
+  margin-bottom: 28px;
+  filter: drop-shadow(0 0 32px rgba(180,140,40,0.25));
   transition: filter 0.3s ease;
 }
 
-.logoImg:hover {
-  filter: drop-shadow(0 8px 28px rgba(232, 160, 0, 0.35));
+.logoWrap:hover {
+  filter: drop-shadow(0 0 48px rgba(180,140,40,0.4));
+}
+
+.logoImg {
+  width: 110px;
+  height: auto;
+  display: block;
+}
+
+/* ── Títulos ── */
+.titleBlock {
+  text-align: center;
+  margin-bottom: 36px;
 }
 
 .titulo {
-  font-size: 1.3rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 2rem;
   font-weight: 700;
-  color: #1a2332;
-  margin-bottom: 4px;
+  color: #c9a84c;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px;
+  line-height: 1.1;
+}
+
+.divisor {
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c9a84c, transparent);
+  margin: 0 auto 12px;
 }
 
 .subtitulo {
-  font-size: 0.75rem;
-  color: #78909c;
-  margin-bottom: 32px;
-  font-family: monospace;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  color: #5a6a7a;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
 }
 
+/* ── Formulário ── */
 .form {
-  text-align: left;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .label {
-  font-size: 0.78rem;
-  color: #546e7a;
-  font-weight: 600;
-  margin-top: 12px;
-  margin-bottom: 4px;
-  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #7a8a9a;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .input {
   width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #cfd8dc;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  color: #1a2332;
-  background: #f8fafc;
+  padding: 13px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  color: #e8e0d0;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
   box-sizing: border-box;
 }
 
+.input::placeholder {
+  color: #3a4a5a;
+}
+
 .input:focus {
-  border-color: #1a4a8a;
-  box-shadow: 0 0 0 3px rgba(26,74,138,0.1);
-  background: #fff;
+  border-color: rgba(201,168,76,0.55);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
 }
 
-.erro {
-  font-size: 0.78rem;
-  color: #e53935;
-  background: #ffeaea;
-  border: 1px solid #ffcdd2;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin-top: 8px;
-}
-
-.btn {
-  margin-top: 20px;
-  width: 100%;
-  background: #1a4a8a;
-  color: #fff;
-  border: none;
+/* ── Erro ── */
+.erroBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(220,50,50,0.1);
+  border: 1px solid rgba(220,50,50,0.25);
   border-radius: 6px;
-  padding: 12px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+  padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: #f08080;
 }
 
-.btn:hover:not(:disabled) { background: #1565c0; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.erroIcon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
 
+/* ── Botão ── */
+.btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #b8902a 0%, #c9a84c 50%, #b8902a 100%);
+  background-size: 200% 100%;
+  background-position: right center;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0d0f12;
+  cursor: pointer;
+  transition: background-position 0.4s ease, box-shadow 0.3s ease, transform 0.15s ease;
+  margin-top: 4px;
+  box-shadow: 0 4px 20px rgba(180,140,40,0.2);
+}
+
+.btn:hover:not(:disabled) {
+  background-position: left center;
+  box-shadow: 0 6px 28px rgba(180,140,40,0.35);
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnInner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ── Spinner ── */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(13,15,18,0.3);
+  border-top-color: #0d0f12;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Rodapé ── */
 .rodape {
-  font-size: 0.68rem;
-  color: #90a4ae;
-  margin-top: 24px;
-  font-family: monospace;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  color: #2a3a4a;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 28px;
+  text-align: center;
 }
