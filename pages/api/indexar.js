@@ -135,6 +135,20 @@ export default async function handler(req, res) {
   const isAdmin = await verificarAdmin(token)
   if (!isAdmin) return res.status(403).json({ error: 'Acesso negado' })
 
+  // Rate limit: máx 10 uploads por minuto por IP
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown'
+  const rlKey = `indexar:${ip}`
+  if (!global._rl) global._rl = new Map()
+  const now = Date.now()
+  const rl = global._rl.get(rlKey) || { count: 0, start: now }
+  if (now - rl.start > 60000) {
+    global._rl.set(rlKey, { count: 1, start: now })
+  } else if (rl.count >= 10) {
+    return res.status(429).json({ error: 'Muitos uploads. Aguarde um momento.' })
+  } else {
+    global._rl.set(rlKey, { ...rl, count: rl.count + 1 })
+  }
+
   const arquivo = Array.isArray(files.arquivo) ? files.arquivo[0] : files.arquivo
   const nomeDoc = (Array.isArray(fields.nome) ? fields.nome[0] : fields.nome) || arquivo?.originalFilename
   const limpar = (Array.isArray(fields.limpar) ? fields.limpar[0] : fields.limpar) === 'true'
