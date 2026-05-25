@@ -1,5 +1,4 @@
 // pages/api/indexar.js
-// Recebe arquivos .docx, extrai artigos e indexa no Supabase com embeddings OpenAI
 
 import { createClient } from '@supabase/supabase-js'
 import mammoth from 'mammoth'
@@ -15,9 +14,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// ── Autenticação ──────────────────────────────────────────────────────────────
-async function verificarAdmin(req) {
-  const token = req.headers.authorization?.replace('Bearer ', '')
+async function verificarAdmin(token) {
   if (!token) return false
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
   if (error || !user) return false
@@ -26,14 +23,12 @@ async function verificarAdmin(req) {
   return perfil?.cargo === 'Administrador'
 }
 
-// ── Extração de texto do .docx ────────────────────────────────────────────────
 async function extrairTexto(caminhoArquivo) {
   const buffer = fs.readFileSync(caminhoArquivo)
   const resultado = await mammoth.extractRawText({ buffer })
   return resultado.value
 }
 
-// ── Detecção de tipo ──────────────────────────────────────────────────────────
 function detectarTipo(texto) {
   const linhas = texto.split('\n').filter(l => l.trim())
   const nArtigos = linhas.filter(l => /^Art\.\s+\d+/i.test(l.trim())).length
@@ -42,7 +37,6 @@ function detectarTipo(texto) {
   return 'tabela'
 }
 
-// ── Chunking por artigo ───────────────────────────────────────────────────────
 function chunkarPorArtigo(texto, nomeDoc) {
   const linhas = texto.split('\n').map(l => l.trim()).filter(Boolean)
   const REGEX_ARTIGO = /^Art\.\s+\d+[\wº°]?(?:-[A-Z])?\b/i
@@ -84,7 +78,6 @@ function chunkarPorArtigo(texto, nomeDoc) {
   return chunks
 }
 
-// ── Chunking para tabelas/listas ──────────────────────────────────────────────
 function chunkarBloco(texto, nomeDoc) {
   const linhas = texto.split('\n').map(l => l.trim()).filter(Boolean)
   const BLOCO = 15
@@ -100,7 +93,6 @@ function chunkarBloco(texto, nomeDoc) {
   return chunks
 }
 
-// ── Embeddings via OpenAI ─────────────────────────────────────────────────────
 async function gerarEmbeddings(textos) {
   const resp = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
@@ -115,33 +107,36 @@ async function gerarEmbeddings(textos) {
   return data.data.map(d => d.embedding)
 }
 
-// ── Handler principal ─────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' })
 
-  const isAdmin = await verificarAdmin(req)
+  // Parseia o form primeiro (bodyParser: false exige isso)
+  const form = formidable({ maxFileSize: 50 * 1024 * 1024, keepExtensions: true })
+  let fields, files
+  try {
+    ;[fields, files] = await new Promise((resolve, reject) => {
+      form.parse(req, (err, f, fi) => err ? reject(err) : resolve([f, fi]))
+    })
+  } catch (err) {
+    return res.status(400).json({ error: 'Erro ao receber arquivo: ' + err.message })
+  }
+
+  // Token pode vir no header OU no campo do form
+  const tokenHeader = req.headers.authorization?.replace('Bearer ', '')
+  const tokenForm = Array.isArray(fields.token) ? fields.token[0] : fields.token
+  const token = tokenHeader || tokenForm
+
+  const isAdmin = await verificarAdmin(token)
   if (!isAdmin) return res.status(403).json({ error: 'Acesso negado' })
 
-  // Parseia o upload
-  const form = formidable({ maxFileSize: 50 * 1024 * 1024, keepExtensions: true })
-  const [fields, files] = await new Promise((resolve, reject) => {
-    form.parse(req, (err, fields, files) => {
-      if (err) reject(err)
-      else resolve([fields, files])
-    })
-  })
-
   const arquivo = Array.isArray(files.arquivo) ? files.arquivo[0] : files.arquivo
-  const nomeDoc = (Array.isArray(fields.nome) ? fields.nome[0] : fields.nome) || arquivo.originalFilename
+  const nomeDoc = (Array.isArray(fields.nome) ? fields.nome[0] : fields.nome) || arquivo?.originalFilename
   const limpar = (Array.isArray(fields.limpar) ? fields.limpar[0] : fields.limpar) === 'true'
 
   if (!arquivo) return res.status(400).json({ error: 'Nenhum arquivo enviado' })
 
   try {
-    // 1. Extrai texto
     const texto = await extrairTexto(arquivo.filepath)
-
-    // 2. Chunkiza
     const tipo = detectarTipo(texto)
     const chunks = tipo === 'artigos'
       ? chunkarPorArtigo(texto, nomeDoc)
@@ -151,45 +146,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Nenhum conteúdo encontrado no arquivo' })
     }
 
-    // 3. Apaga chunks antigos se solicitado
     if (limpar) {
       await supabaseAdmin.from('documentos_legislacao')
         .delete().eq('nome_documento', nomeDoc)
     }
 
-    // 4. Gera embeddings em lotes de 20
     const LOTE = 20
     let inseridos = 0
     for (let i = 0; i < chunks.length; i += LOTE) {
       const lote = chunks.slice(i, i + LOTE)
-      const textos = lote.map(c => c.trecho)
-      const embeddings = await gerarEmbeddings(textos)
-
+      const embeddings = await gerarEmbeddings(lote.map(c => c.trecho))
       const rows = lote.map((c, j) => ({
         nome_documento: c.nome_documento,
         trecho: c.trecho,
         embedding: embeddings[j],
         metadata: c.metadata
       }))
-
       const { error } = await supabaseAdmin.from('documentos_legislacao').insert(rows)
-      if (error) throw new Error(`Erro ao inserir no Supabase: ${error.message}`)
+      if (error) throw new Error(`Erro Supabase: ${error.message}`)
       inseridos += rows.length
     }
 
-    // 5. Limpa arquivo temporário
-    fs.unlinkSync(arquivo.filepath)
+    try { fs.unlinkSync(arquivo.filepath) } catch (_) {}
 
-    return res.status(200).json({
-      ok: true,
-      tipo,
-      chunks: chunks.length,
-      inseridos,
-      documento: nomeDoc
-    })
+    return res.status(200).json({ ok: true, tipo, chunks: chunks.length, inseridos, documento: nomeDoc })
 
   } catch (err) {
-    console.error('Erro na indexação:', err)
+    console.error('Erro indexação:', err)
     return res.status(500).json({ error: err.message || 'Erro interno' })
   }
 }
