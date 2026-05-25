@@ -4,7 +4,7 @@ import Head from 'next/head'
 import { supabase } from '../lib/supabase'
 import '../styles/globals.css'
 
-const ROTAS_PUBLICAS = ['/login']
+const ROTAS_PUBLICAS = ['/login', '/cadastro', '/aguardando']
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -42,7 +42,31 @@ export default function App({ Component, pageProps }) {
       if (!session && !rotaPublica) {
         router.push('/login')
       } else if (session && rotaPublica) {
-        router.push('/')
+        // Verifica status do perfil antes de redirecionar
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        )
+        const { data: perfil } = await sb.from('perfis').select('status, ativo').eq('id', session.user.id).single()
+        if (perfil?.status === 'pendente' || !perfil?.ativo) {
+          router.push('/aguardando')
+        } else {
+          router.push('/')
+        }
+      } else if (session && !rotaPublica) {
+        // Verifica se fiscal pendente está tentando acessar área restrita
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        )
+        const { data: perfil } = await sb.from('perfis').select('status, ativo').eq('id', session.user.id).single()
+        if (perfil?.status === 'pendente' && router.pathname !== '/aguardando') {
+          router.push('/aguardando')
+        } else {
+          setVerificando(false)
+        }
       } else {
         setVerificando(false)
       }
