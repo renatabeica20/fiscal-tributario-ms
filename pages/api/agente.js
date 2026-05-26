@@ -260,6 +260,33 @@ Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributa
    - Tributada internamente → primeiro código do grupo (ex: 576, 581, 584...)
    - Não tributada internamente → segundo código (ex: 577, 582, 585...)
    - Parcialmente tributada → terceiro código (ex: 580, 583, 586...)
+
+### SUBANEXO XIII AO ANEXO I — PRODUTOS HORTIFRUTIGRANJEIROS (Convênio ICM 44/75)
+Art. 1º — REDUÇÃO DE BASE DE CÁLCULO nas operações internas e de importação:
+Redução de 58,824% — alíquota efetiva de 7% — para produtos EM ESTADO NATURAL, incluindo:
+abóbora, abobrinha, acelga, agrião, aipim, aipo, alcachofra, alface, almeirão, aspargo, batata,
+batata-doce, berinjela, beterraba, brócolis, cebola, cebolinha, cenoura, chicória, chuchu, coentro,
+cogumelo, couve, couve-flor, endívia, ervilha, escarola, espinafre, flores frescas, frutas frescas,
+gengibre, inhame, jiló, macaxeira, mandioca, maxixe, milho verde, moranga, mostarda, nabo,
+OVOS (NCM 0407.21.00, 0407.29.00, 0407.90.00), palmito, pepino, pimenta, pimentão, quiabo,
+rabanete, repolho, rúcula, salsa, tomate, vagem.
+
+Parágrafo único — A redução NÃO SE APLICA quando:
+a) destinados à industrialização (aplica-se diferimento do Anexo II)
+b) congelados, assados, cozidos, temperados, fritos ou pré-fritos
+c) compostos ou envolvidos por produtos químicos (acidulantes, corantes, conservantes, edulcorantes)
+d) acondicionados em embalagens maleáveis (plástico, lata, vidro) COM aditivos
+
+A redução SE APLICA mesmo quando o produto foi embalado em caixas, cartelas, bandejas rígidas
+ou semirrígidas SEM aditivos, ou ralado, descascado, limpo, cortado, resfriado, fatiado SEM aditivos.
+
+CONDICIONAMENTO: A redução é CONDICIONADA ao cumprimento das obrigações fiscais (art. 55 Anexo I).
+Constatada irregularidade fiscal tendente a ocultar operação tributável → perda do benefício → alíquota cheia.
+
+Art. 2º — ISENÇÃO: operações internas de produtores destinando produtos em estado natural
+diretamente ao consumidor em quantidade compatível com consumo.
+
+Art. 3º — ISENÇÃO: operações INTERESTADUAIS com produtos em estado natural (mesmas condições do art. 1º).
 `
 
   // ─── RAG — busca híbrida (vetorial + textual) ────────────────────────────
