@@ -276,13 +276,18 @@ Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributa
     // Parágrafos: "§2º", "§ 1"
     const paraMatches = texto.match(/§\s*\d+[ºª°]?/g) || []
     termos.push(...paraMatches)
+    // Subanexos e Anexos com número romano: "Subanexo XIII", "Anexo XV"
+    const subanexoMatches = texto.match(/subanexo\s+[IVXLCDM]+/gi) || []
+    termos.push(...subanexoMatches)
+    const anexoMatches = texto.match(/anexo\s+[IVXLCDM]+/gi) || []
+    termos.push(...anexoMatches)
     // Palavras relevantes longas (mais de 5 chars, exceto stopwords)
     const stopwords = new Set(['como','para','quando','sobre','quais','qual','que','não','sim','uma','uns'])
     const palavras = texto.toLowerCase().split(/\s+/)
       .filter(p => p.length > 5 && !stopwords.has(p))
       .slice(0, 5)
     termos.push(...palavras)
-    return [...new Set(termos)].slice(0, 8)
+    return [...new Set(termos)].slice(0, 10)
   }
 
   if (OPENAI_KEY && SUPABASE_URL && SUPABASE_KEY) {
