@@ -287,7 +287,17 @@ Fatos 580, 583, 586, 589, 592, 595, 598 → MULTA 100% DO IMPOSTO (parte tributa
 
   if (OPENAI_KEY && SUPABASE_URL && SUPABASE_KEY) {
     try {
-      const textoConsulta = mensagem || 'análise de documentos fiscais'
+      // Normaliza referências a Subanexos e Anexos — converte arábico para romano
+      const arabParaRomano = {
+        '1':'I','2':'II','3':'III','4':'IV','5':'V','6':'VI','7':'VII','8':'VIII',
+        '9':'IX','10':'X','11':'XI','12':'XII','13':'XIII','14':'XIV','15':'XV',
+        '16':'XVI','17':'XVII','18':'XVIII','19':'XIX','20':'XX','21':'XXI',
+        '22':'XXII','23':'XXIII','24':'XXIV','25':'XXV','26':'XXVI','27':'XXVII'
+      }
+      const normalizarQuery = (txt) => txt.replace(/\b(subanexo|anexo)\s+(\d{1,2})\b/gi, (m, p, n) => {
+        const r = arabParaRomano[n]; return r ? p + ' ' + r : m
+      })
+      const textoConsulta = normalizarQuery(mensagem || 'análise de documentos fiscais')
 
       // ── 1. BUSCA VETORIAL (por similaridade semântica) ──────────────────
       const embResp = await fetch('https://api.openai.com/v1/embeddings', {
@@ -467,10 +477,6 @@ Elabore a matéria tributária com os dados fornecidos. Estrutura obrigatória e
 Regras de redação:
 - Português formal, sem caixa alta excessiva, sem subtítulos, sem negrito — texto corrido
 - Datas e horas SEMPRE no formato: "24 de abril de 2026, às 14h35min" — nunca por extenso ("vinte e quatro de abril")
-- Números de termos (TVF, TA, ALIM) SEMPRE no formato: "TVF n. 1025011/99" ou "TA n. 1025011/99" — sem pontos separando os dígitos do número, sempre com a unidade após a barra (ex: /99 para Subunidade de Fiscalização Móvel - Campo Grande)
-- O fiscal que realiza a abordagem é SEMPRE chamado de "Fiscal da Receita Estadual" — NUNCA "Agente de Fazenda Estadual", "Agente Fiscal" ou qualquer outra denominação
-- Placas de veículo SEMPRE formatadas com hífen: padrão antigo "ABC-1234", padrão Mercosul "ABC-1D23"
-- NUNCA mencione reduções ou sua ausência no texto da matéria tributária — não escreva "não sendo permitida redução" nem "o contribuinte pode se beneficiar de redução" — isso é informação do sistema oficial, não da matéria
 - Cada informação aparece uma única vez
 - Cite apenas artigos das fontes autorizadas (base vetorial ou BASE_LEI)
 - Delimite a matéria com:
@@ -524,28 +530,6 @@ ${BASE_LEI}
 LEGISLAÇÃO DA BASE VETORIAL (FONTE PRIMÁRIA PARA ESTE CASO)
 ════════════════════════════════════════
 ${contextoRAG}
-
-════════════════════════════════════════
-MODO RESPOSTA A DESK
-════════════════════════════════════════
-Quando a mensagem iniciar com "GERAR RESPOSTA A DESK":
-- Produza OBRIGATORIAMENTE uma carta formal
-- Use **negrito** para destacar títulos de seções (ex: **I — Da inidoneidade documental**) e termos legais importantes
-- Siga exatamente este formato:
-  "Prezado Sr./Sra. [nome]," → parágrafo de acuse → síntese do argumento → seções com títulos em negrito rebatendo cada argumento → manutenção do TVF → "Permanecemos à disposição..." → "Atenciosamente," → assinatura completa
-- Tom: formal, direto, fundamentado
-- A assinatura SEMPRE usa os dados do fiscal informados na mensagem
-- Delimite com ===MATERIA_INICIO=== e ===MATERIA_FIM===
-
-════════════════════════════════════════
-MODO CONTESTAÇÃO DE ALIM
-════════════════════════════════════════
-Quando a mensagem iniciar com "GERAR CONTESTAÇÃO DE IMPUGNAÇÃO":
-- Produza uma petição administrativa formal com as seções: DOS FATOS, DA IMPROCEDÊNCIA DA IMPUGNAÇÃO, CONCLUSÃO E PEDIDOS
-- Use **negrito** nos títulos das seções (ex: **I — DOS FATOS**, **II — DA IMPROCEDÊNCIA DA IMPUGNAÇÃO**)
-- Rebata cada argumento numerado do contribuinte com fundamento legal específico
-- Tom: jurídico, firme, técnico
-- Delimite com ===MATERIA_INICIO=== e ===MATERIA_FIM===
 
 ════════════════════════════════════════
 REGRAS FINAIS INVIOLÁVEIS
