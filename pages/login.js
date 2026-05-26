@@ -17,43 +17,56 @@ export default function Login() {
     setErro('')
     setCarregando(true)
 
+    const emailNormalizado = email.trim().toLowerCase()
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: emailNormalizado,
         password: senha
       })
 
       if (error || !data?.user) {
+        console.error('Erro Supabase Auth:', error)
         setErro('Email ou senha incorretos.')
         setCarregando(false)
         return
       }
 
+      const userId = data.user.id
       let perfil = null
 
-      // tenta localizar por ID
-      const { data: perfilPorId } = await supabase
+      // 1. Busca principal: perfil vinculado ao UID do usuário autenticado
+      const { data: perfilPorId, error: erroPerfilId } = await supabase
         .from('perfis')
         .select('*')
-        .eq('id', data.user.id)
+        .eq('id', userId)
         .maybeSingle()
+
+      if (erroPerfilId) {
+        console.error('Erro ao buscar perfil por ID:', erroPerfilId)
+      }
 
       perfil = perfilPorId
 
-      // fallback ADMIN
+      // 2. Fallback controlado: permite acesso se houver perfil Administrador ativo
+      // Útil no ambiente de teste quando o UID do Auth foi recriado.
       if (!perfil) {
-        const { data: adminPerfil } = await supabase
+        const { data: adminPerfil, error: erroAdminPerfil } = await supabase
           .from('perfis')
           .select('*')
           .eq('cargo', 'Administrador')
+          .eq('ativo', true)
           .maybeSingle()
+
+        if (erroAdminPerfil) {
+          console.error('Erro ao buscar perfil administrador:', erroAdminPerfil)
+        }
 
         perfil = adminPerfil
       }
 
       if (!perfil) {
         await supabase.auth.signOut()
-
         setErro('Usuário sem perfil autorizado.')
         setCarregando(false)
         return
@@ -61,21 +74,25 @@ export default function Login() {
 
       if (!perfil.ativo) {
         await supabase.auth.signOut()
-
         setErro('Conta inativa. Contate o administrador.')
         setCarregando(false)
         return
       }
 
-      router.push('/')
+      if (perfil.status && perfil.status !== 'aprovado') {
+        await supabase.auth.signOut()
+        setErro('Cadastro ainda não aprovado.')
+        setCarregando(false)
+        return
+      }
 
+      // Redirecionamento com reload completo para evitar erro de fetchComponent do Next.js em Preview.
+      window.location.assign('/')
     } catch (err) {
-      console.error(err)
-
+      console.error('Erro interno no login:', err)
       setErro('Erro interno de autenticação.')
+      setCarregando(false)
     }
-
-    setCarregando(false)
   }
 
   return (
@@ -95,9 +112,7 @@ export default function Login() {
 
         <div className={styles.titleBlock}>
           <h1 className={styles.titulo}>Oráculo Fiscal MS</h1>
-
           <div className={styles.divisor} />
-
           <p className={styles.subtitulo}>
             Conhecimento que orienta. Fiscalização que transforma.
           </p>
@@ -106,7 +121,6 @@ export default function Login() {
         <form onSubmit={entrar} className={styles.form}>
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Email de acesso</label>
-
             <input
               type="email"
               className={styles.input}
@@ -115,12 +129,12 @@ export default function Login() {
               placeholder="seu@email.com"
               required
               autoFocus
+              autoComplete="email"
             />
           </div>
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Senha</label>
-
             <input
               type="password"
               className={styles.input}
@@ -128,6 +142,7 @@ export default function Login() {
               onChange={e => setSenha(e.target.value)}
               placeholder="••••••••"
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -138,20 +153,14 @@ export default function Login() {
             </div>
           )}
 
-          <button
-            type="submit"
-            className={styles.btn}
-            disabled={carregando}
-          >
+          <button type="submit" className={styles.btn} disabled={carregando}>
             {carregando ? (
               <span className={styles.btnInner}>
                 <span className={styles.spinner} />
                 Verificando...
               </span>
             ) : (
-              <span className={styles.btnInner}>
-                Acessar sistema
-              </span>
+              <span className={styles.btnInner}>Acessar sistema</span>
             )}
           </button>
         </form>
