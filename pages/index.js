@@ -1169,7 +1169,7 @@ export default function Home() {
     if (fiscal) {
       const tipo = tipoEscolhido || detectarTipoDocumento(textoCopiar) || 'TVF'
       const ehDefesa = ['DESK', 'CONTESTACAO'].includes(tipo)
-      await supabase.from('historico_documentos').upsert({
+      const { error: errSalvar } = await supabase.from('historico_documentos').insert({
         fiscal_id: fiscal.id,
         tipo,
         autuado: ehDefesa ? (labelSalvar || popupSalvar.autuado || null) : popupSalvar.autuado,
@@ -1177,6 +1177,7 @@ export default function Home() {
         materia_tributaria: textoCopiar,
         conversa: historico.slice(-10)
       })
+      if (errSalvar) console.error('Erro ao salvar documento:', errSalvar)
     }
     setTipoEscolhido('')
     setPopupSalvar(null)
