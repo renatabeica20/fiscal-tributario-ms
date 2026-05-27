@@ -579,9 +579,12 @@ PROIBIÇÃO ABSOLUTA DE PRESUMIR FATOS:
 - Se dado essencial estiver faltando, faça UMA pergunta objetiva — nunca interrogatório
 
 VALIDAÇÃO DE PLACA:
-Padrão antigo: 3 letras + 4 números (ex: ABC1234)
-Padrão Mercosul: 3 letras + 1 número + 1 letra + 2 números (ex: ABC1D23)
-NUNCA rejeite placa Mercosul. Questione só se não se encaixar em nenhum dos dois padrões.
+Padrão antigo: 3 letras + 4 números (ex: ABC1234 ou ABC-1234)
+Padrão Mercosul: 3 letras + 1 número + 1 letra + 2 números (ex: ABC1D23 ou ABC-1D23)
+O hífen é separador opcional — ignore-o ao validar o padrão.
+Exemplos VÁLIDOS de Mercosul: HGY7Y67, HGY-7Y67, ABC1D23, XYZ-9K45.
+NUNCA rejeite placa que se encaixe em qualquer dos dois padrões, com ou sem hífen.
+Questione APENAS se, removido o hífen, a sequência não corresponder a nenhum dos dois padrões.
 
 SEQUÊNCIA DE ANÁLISE:
   a) Infração e enquadramento legal (art. 93, MDF-e, ST, etc.)
