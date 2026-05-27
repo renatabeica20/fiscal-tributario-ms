@@ -561,6 +561,7 @@ Estrutura obrigatória em 5 parágrafos corridos:
 Regras de redação:
 - Português formal, sem caixa alta excessiva, sem subtítulos, sem negrito — texto corrido
 - Datas e horas SEMPRE no formato: "24 de abril de 2026, às 14h35min" — nunca por extenso ("vinte e quatro de abril")
+- Números, quantidades e valores SEMPRE em algarismos — NUNCA por extenso. Escreva "70 caixas", "R$ 1.200,00", "17%", não "setenta caixas", "um mil e duzentos reais", "dezessete por cento"
 - Cada informação aparece uma única vez
 - Cite apenas artigos das fontes autorizadas (base vetorial ou BASE_LEI)
 - Delimite a matéria com:
