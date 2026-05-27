@@ -204,17 +204,17 @@ function mascaraTelefone(v) {
 
 const inputStyle = {
   width: '100%', padding: '10px 14px',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(201,168,76,0.15)',
+  background: 'rgba(255,255,255,0.08)',
+  border: '1px solid rgba(201,168,76,0.35)',
   borderRadius: '8px', fontSize: '0.9rem',
-  color: '#c8c0b0', outline: 'none',
+  color: '#e8e0d0', outline: 'none',
   fontFamily: "'DM Sans', sans-serif",
   boxSizing: 'border-box', transition: 'border-color 0.2s'
 }
 
 const labelStyle = {
   fontFamily: "'DM Sans', sans-serif",
-  fontSize: '0.68rem', color: '#3a4a5a',
+  fontSize: '0.68rem', color: '#7a9ab8',
   textTransform: 'uppercase', letterSpacing: '0.08em',
   display: 'block', marginBottom: '5px'
 }
@@ -232,6 +232,40 @@ const secaoTituloStyle = {
   textTransform: 'uppercase', letterSpacing: '0.12em',
   marginBottom: '16px', display: 'flex',
   alignItems: 'center', gap: '8px'
+}
+
+function InputComFocus({ style, ...props }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <input
+      {...props}
+      style={{
+        ...style,
+        border: focused ? '1.5px solid rgba(201,168,76,0.85)' : (style?.border || '1px solid rgba(201,168,76,0.35)'),
+        boxShadow: focused ? '0 0 0 3px rgba(201,168,76,0.12)' : 'none',
+        background: focused ? 'rgba(255,255,255,0.11)' : (style?.background || 'rgba(255,255,255,0.08)'),
+      }}
+      onFocus={e => { setFocused(true); props.onFocus?.(e) }}
+      onBlur={e => { setFocused(false); props.onBlur?.(e) }}
+    />
+  )
+}
+
+function TextareaComFocus({ style, ...props }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <textarea
+      {...props}
+      style={{
+        ...style,
+        border: focused ? '1.5px solid rgba(201,168,76,0.85)' : (style?.border || '1px solid rgba(201,168,76,0.35)'),
+        boxShadow: focused ? '0 0 0 3px rgba(201,168,76,0.12)' : 'none',
+        background: focused ? 'rgba(255,255,255,0.11)' : (style?.background || 'rgba(255,255,255,0.08)'),
+      }}
+      onFocus={e => { setFocused(true); props.onFocus?.(e) }}
+      onBlur={e => { setFocused(false); props.onBlur?.(e) }}
+    />
+  )
 }
 
 function Campo({ label, children }) {
@@ -275,7 +309,7 @@ const INCISOS = [
 function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
   const set = (campo) => (e) => setForm(f => ({ ...f, [campo]: e.target.value }))
 
-  const addMerc = () => setForm(f => ({ ...f, mercadoria: [...f.mercadoria, { descricao: '', quantidade: '', unidade: 'unidades', valor: '' }] }))
+  const addMerc = () => setForm(f => ({ ...f, mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }, ...f.mercadoria] }))
   const removeMerc = (i) => setForm(f => ({ ...f, mercadoria: f.mercadoria.filter((_, idx) => idx !== i) }))
   const setMerc = (i, campo, val) => setForm(f => {
     const m = [...f.mercadoria]
@@ -303,17 +337,17 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         <div style={secaoTituloStyle}>📍 Abordagem</div>
         <Grid cols={2}>
           <Campo label="Data *">
-            <input type="date" style={inputStyle} value={form.data} onChange={set('data')} />
+            <InputComFocus type="date" style={inputStyle} value={form.data} onChange={set('data')} />
           </Campo>
           <Campo label="Hora *">
-            <input type="time" style={inputStyle} value={form.hora} onChange={set('hora')} />
+            <InputComFocus type="time" style={inputStyle} value={form.hora} onChange={set('hora')} />
           </Campo>
         </Grid>
         <Campo label="Endereço completo *">
-          <input style={inputStyle} value={form.endereco} onChange={set('endereco')} placeholder="Rua, número, bairro" />
+          <InputComFocus style={inputStyle} value={form.endereco} onChange={set('endereco')} placeholder="Rua, número, bairro" />
         </Campo>
         <Campo label="Cidade">
-          <input style={inputStyle} value={form.cidade} onChange={set('cidade')} />
+          <InputComFocus style={inputStyle} value={form.cidade} onChange={set('cidade')} />
         </Campo>
       </div>
 
@@ -325,7 +359,7 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
           <label style={labelStyle}>Placa(s) *</label>
           {form.placas.map((placa, i) => (
             <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-              <input
+              <InputComFocus
                 style={{ ...inputStyle, flex: 1 }}
                 value={placa}
                 onChange={e => {
@@ -354,14 +388,14 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         </div>
         <Grid cols={2}>
           <Campo label="Nome do motorista *">
-            <input style={inputStyle} value={form.motorista} onChange={set('motorista')} placeholder="Nome completo" />
+            <InputComFocus style={inputStyle} value={form.motorista} onChange={set('motorista')} placeholder="Nome completo" />
           </Campo>
           <Campo label="CPF do motorista">
-            <input style={inputStyle} value={form.cpf} onChange={e => setForm(f => ({ ...f, cpf: mascaraCPF(e.target.value) }))} placeholder="000.000.000-00" />
+            <InputComFocus style={inputStyle} value={form.cpf} onChange={e => setForm(f => ({ ...f, cpf: mascaraCPF(e.target.value) }))} placeholder="000.000.000-00" />
           </Campo>
         </Grid>
         <Campo label="Telefone">
-          <input style={inputStyle} value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: mascaraTelefone(e.target.value) }))} placeholder="(67) 99999-9999" />
+          <InputComFocus style={inputStyle} value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: mascaraTelefone(e.target.value) }))} placeholder="(67) 99999-9999" />
         </Campo>
       </div>
 
@@ -369,14 +403,14 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
       <div style={secaoStyle}>
         <div style={secaoTituloStyle}>🏢 Sujeito passivo</div>
         <Campo label="Nome / Razão social *">
-          <input style={inputStyle} value={form.sujeito} onChange={set('sujeito')} placeholder="Nome ou razão social" />
+          <InputComFocus style={inputStyle} value={form.sujeito} onChange={set('sujeito')} placeholder="Nome ou razão social" />
         </Campo>
         <Grid cols={2}>
           <Campo label="IE (Inscrição Estadual)">
-            <input style={inputStyle} value={form.ie} onChange={e => setForm(f => ({ ...f, ie: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
+            <InputComFocus style={inputStyle} value={form.ie} onChange={e => setForm(f => ({ ...f, ie: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
           </Campo>
           <Campo label="CNPJ / CPF">
-            <input style={inputStyle} value={form.cnpj} onChange={e => {
+            <InputComFocus style={inputStyle} value={form.cnpj} onChange={e => {
               const v = e.target.value.replace(/\D/g, '')
               setForm(f => ({ ...f, cnpj: v.length <= 11 ? mascaraCPF(v) : mascaraCNPJ(v) }))
             }} placeholder="00.000.000/0000-00" />
@@ -384,7 +418,7 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         </Grid>
         {tipo === 'TA' && (
           <Campo label="Documentos apresentados">
-            <input style={inputStyle} value={form.documentos || ''} onChange={set('documentos')} placeholder="NF nº ..., CTe nº ..., MDFe nº ... (ou 'nenhum')" />
+            <InputComFocus style={inputStyle} value={form.documentos || ''} onChange={set('documentos')} placeholder="NF nº ..., CTe nº ..., MDFe nº ... (ou 'nenhum')" />
           </Campo>
         )}
       </div>
@@ -400,23 +434,23 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         {form.mercadoria.map((m, i) => (
           <div key={i} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#5a6a7a' }}>Item {i + 1}</span>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#5a6a7a' }}>Item {form.mercadoria.length - i}</span>
               {form.mercadoria.length > 1 && (
                 <button onClick={() => removeMerc(i)} style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
               )}
             </div>
             <Campo label="Descrição *">
-              <input style={inputStyle} value={m.descricao} onChange={e => setMerc(i, 'descricao', e.target.value)} placeholder="Ex: ovos extra branco, cartelas com 30 unidades" />
+              <InputComFocus style={inputStyle} value={m.descricao} onChange={e => setMerc(i, 'descricao', e.target.value)} placeholder="Ex: ovos extra branco, cartelas com 30 unidades" />
             </Campo>
             <Grid cols={3}>
               <Campo label="Quantidade">
-                <input style={inputStyle} value={m.quantidade} onChange={e => setMerc(i, 'quantidade', e.target.value)} placeholder="Ex: 70" />
+                <InputComFocus style={inputStyle} value={m.quantidade} onChange={e => setMerc(i, 'quantidade', e.target.value)} placeholder="Ex: 70" />
               </Campo>
               <Campo label="Unidade">
-                <input style={inputStyle} value={m.unidade} onChange={e => setMerc(i, 'unidade', e.target.value)} placeholder="caixas, kg, m², unidades..." />
+                <InputComFocus style={inputStyle} value={m.unidade} onChange={e => setMerc(i, 'unidade', e.target.value)} placeholder="caixas, kg, m², unidades..." />
               </Campo>
               <Campo label="Valor unitário (R$)">
-                <input style={inputStyle} value={m.valor} onChange={e => setMerc(i, 'valor', mascaraValor(e.target.value))} placeholder="0,00" />
+                <InputComFocus style={inputStyle} value={m.valor} onChange={e => setMerc(i, 'valor', mascaraValor(e.target.value))} placeholder="0,00" />
               </Campo>
             </Grid>
           </div>
@@ -478,7 +512,7 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         )}
 
         <Campo label="Observações adicionais">
-          <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={form.obs} onChange={set('obs')} placeholder="Detalhes relevantes da abordagem, declarações do motorista, registros fotográficos..." />
+          <TextareaComFocus style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={form.obs} onChange={set('obs')} placeholder="Detalhes relevantes da abordagem, declarações do motorista, registros fotográficos..." />
         </Campo>
       </div>
 
@@ -545,22 +579,22 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
       <div style={secaoStyle}>
         <div style={secaoTituloStyle}>📄 Identificação</div>
         <Campo label={form.tipo === 'contestacao' ? 'Número do ALIM *' : 'Número do TVF/TA *'}>
-          <input style={inputStyle} value={form.numero_doc} onChange={set('numero_doc')} placeholder={form.tipo === 'contestacao' ? 'Ex: 11.592-M' : 'Ex: 001024099'} />
+          <InputComFocus style={inputStyle} value={form.numero_doc} onChange={set('numero_doc')} placeholder={form.tipo === 'contestacao' ? 'Ex: 11.592-M' : 'Ex: 001024099'} />
         </Campo>
         <Campo label="Contribuinte / Razão social *">
-          <input style={inputStyle} value={form.contribuinte} onChange={set('contribuinte')} placeholder="Nome ou razão social" />
+          <InputComFocus style={inputStyle} value={form.contribuinte} onChange={set('contribuinte')} placeholder="Nome ou razão social" />
         </Campo>
         {form.tipo === 'desk' && (
           <Campo label="Nome do destinatário (quem assinou o DESK)">
-            <input style={inputStyle} value={form.destinatario || ''} onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: Jair Perin" />
+            <InputComFocus style={inputStyle} value={form.destinatario || ''} onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: Jair Perin" />
           </Campo>
         )}
         <Grid cols={2}>
           <Campo label="IE">
-            <input style={inputStyle} value={form.ie_contrib} onChange={e => setForm(f => ({ ...f, ie_contrib: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
+            <InputComFocus style={inputStyle} value={form.ie_contrib} onChange={e => setForm(f => ({ ...f, ie_contrib: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
           </Campo>
           <Campo label="CNPJ">
-            <input style={inputStyle} value={form.cnpj_contrib} onChange={e => setForm(f => ({ ...f, cnpj_contrib: mascaraCNPJ(e.target.value) }))} placeholder="00.000.000/0000-00" />
+            <InputComFocus style={inputStyle} value={form.cnpj_contrib} onChange={e => setForm(f => ({ ...f, cnpj_contrib: mascaraCNPJ(e.target.value) }))} placeholder="00.000.000/0000-00" />
           </Campo>
         </Grid>
       </div>
@@ -571,7 +605,7 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#4a5a6a', marginBottom: '12px' }}>
           Cole aqui o texto do TVF ou TA autuado. O Oráculo terá acesso completo aos fatos e fundamentação para gerar uma resposta mais precisa.
         </p>
-        <textarea
+        <TextareaComFocus
           style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
           value={form.texto_tvf}
           onChange={e => setForm(f => ({ ...f, texto_tvf: e.target.value }))}
@@ -584,7 +618,7 @@ function FormularioContestacao({ form, setForm, onVoltar, onGerar }) {
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.78rem', color: '#4a5a6a', marginBottom: '12px' }}>
           Cole aqui o texto da impugnação ou reclamação do contribuinte. O Oráculo vai gerar a resposta em defesa do fisco, rebatendo os argumentos ponto a ponto.
         </p>
-        <textarea
+        <TextareaComFocus
           style={{ ...inputStyle, minHeight: '200px', resize: 'vertical' }}
           value={form.texto_contribuinte}
           onChange={set('texto_contribuinte')}
