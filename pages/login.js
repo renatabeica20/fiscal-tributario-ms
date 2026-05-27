@@ -1,23 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Login.module.css'
 
+const DOMINIO = '@fazenda.ms.gov.br'
+const STORAGE_KEY = 'oraculo_usuario'
+
 export default function Login() {
   const router = useRouter()
 
-  const [email, setEmail] = useState('')
+  const [usuario, setUsuario] = useState('')
   const [senha, setSenha] = useState('')
+  const [lembrar, setLembrar] = useState(false)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  // Carrega usuário salvo ao montar
+  useEffect(() => {
+    const salvo = localStorage.getItem(STORAGE_KEY)
+    if (salvo) {
+      setUsuario(salvo)
+      setLembrar(true)
+    }
+  }, [])
+
   const entrar = async (e) => {
     e.preventDefault()
-
     setErro('')
     setCarregando(true)
 
-    const emailNormalizado = email.trim().toLowerCase()
+    const usuarioLimpo = usuario.trim().toLowerCase().replace(/@.*$/, '') // remove @ se colou email inteiro
+    const emailNormalizado = usuarioLimpo + DOMINIO
+
+    // Salva ou remove do localStorage conforme checkbox
+    if (lembrar) {
+      localStorage.setItem(STORAGE_KEY, usuarioLimpo)
+    } else {
+      localStorage.removeItem(STORAGE_KEY)
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -35,7 +55,6 @@ export default function Login() {
       const userId = data.user.id
       let perfil = null
 
-      // 1. Busca principal: perfil vinculado ao UID do usuário autenticado
       const { data: perfilPorId, error: erroPerfilId } = await supabase
         .from('perfis')
         .select('*')
@@ -48,8 +67,6 @@ export default function Login() {
 
       perfil = perfilPorId
 
-      // 2. Fallback controlado: permite acesso se houver perfil Administrador ativo
-      // Útil no ambiente de teste quando o UID do Auth foi recriado.
       if (!perfil) {
         const { data: adminPerfil, error: erroAdminPerfil } = await supabase
           .from('perfis')
@@ -86,7 +103,6 @@ export default function Login() {
         return
       }
 
-      // Redirecionamento com reload completo para evitar erro de fetchComponent do Next.js em Preview.
       window.location.assign('/')
     } catch (err) {
       console.error('Erro interno no login:', err)
@@ -120,17 +136,39 @@ export default function Login() {
 
         <form onSubmit={entrar} className={styles.form}>
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>Email de acesso</label>
-            <input
-              type="email"
-              className={styles.input}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              required
-              autoFocus
-              autoComplete="email"
-            />
+            <label className={styles.label}>Usuário</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+              <input
+                type="text"
+                className={styles.input}
+                style={{ borderRadius: '8px 0 0 8px', flex: 1 }}
+                value={usuario}
+                onChange={e => setUsuario(e.target.value)}
+                placeholder="seu.nome"
+                required
+                autoFocus={!usuario}
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+              />
+              <span style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderLeft: 'none',
+                borderRadius: '0 8px 8px 0',
+                padding: '0 12px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '0.78rem',
+                color: '#4a6a8a',
+                whiteSpace: 'nowrap',
+                userSelect: 'none'
+              }}>
+                {DOMINIO}
+              </span>
+            </div>
           </div>
 
           <div className={styles.fieldGroup}>
@@ -143,7 +181,39 @@ export default function Login() {
               placeholder="••••••••"
               required
               autoComplete="current-password"
+              autoFocus={!!usuario}
             />
+          </div>
+
+          {/* Lembrar usuário */}
+          <div
+            onClick={() => setLembrar(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              cursor: 'pointer', userSelect: 'none', marginBottom: '4px'
+            }}
+          >
+            <div style={{
+              width: '18px', height: '18px', flexShrink: 0,
+              borderRadius: '4px',
+              border: lembrar ? '2px solid #c9a84c' : '2px solid rgba(255,255,255,0.2)',
+              background: lembrar ? '#c9a84c' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}>
+              {lembrar && (
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#0d2f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            <span style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '0.72rem', color: '#4a6a8a',
+              letterSpacing: '0.04em'
+            }}>
+              Lembrar meu usuário
+            </span>
           </div>
 
           {erro && (
@@ -167,25 +237,15 @@ export default function Login() {
 
         <p
           className={styles.rodape}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            alignItems: 'center'
-          }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}
         >
           <span>Acesso restrito · SEFAZ/MS</span>
-
           <button
             onClick={() => router.push('/cadastro')}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#3a5a7a',
-              cursor: 'pointer',
-              fontSize: '0.65rem',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
+              background: 'none', border: 'none', color: '#3a5a7a',
+              cursor: 'pointer', fontSize: '0.65rem',
+              letterSpacing: '0.08em', textTransform: 'uppercase',
               textDecoration: 'underline'
             }}
           >
