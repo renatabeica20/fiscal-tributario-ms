@@ -137,11 +137,11 @@ export default function Login() {
         <form onSubmit={entrar} className={styles.form}>
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Usuário</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+            <div style={{ position: 'relative' }}>
               <input
                 type="text"
                 className={styles.input}
-                style={{ borderRadius: '8px 0 0 8px', flex: 1 }}
+                style={{ paddingRight: '180px' }}
                 value={usuario}
                 onChange={e => setUsuario(e.target.value)}
                 placeholder="seu.nome"
@@ -153,18 +153,15 @@ export default function Login() {
                 spellCheck="false"
               />
               <span style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(201,168,76,0.2)',
-                borderLeft: 'none',
-                borderRadius: '0 8px 8px 0',
-                padding: '0 12px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
                 fontSize: '0.78rem',
                 color: '#4a6a8a',
                 whiteSpace: 'nowrap',
-                userSelect: 'none'
+                userSelect: 'none',
+                pointerEvents: 'none'
               }}>
                 {DOMINIO}
               </span>
