@@ -751,6 +751,379 @@ IMPORTANTE: O fiscal subscritor é ${fiscal?.nome || 'Fiscal Tributário Estadua
 Gere a contestação em defesa do fisco, rebatendo os argumentos ponto a ponto com base na legislação tributária do MS.`
 }
 
+
+// ─── Helpers ALIM ────────────────────────────────────────────────────────────
+function calcularUFERMS(valorStr) {
+  const v = parseFloat((valorStr || '').replace(/\./g, '').replace(',', '.')) || 0
+  if (v <= 10740) return 10
+  if (v <= 26850) return 25
+  if (v <= 53700) return 50
+  if (v <= 107400) return 100
+  if (v <= 198690) return 150
+  return 200
+}
+
+const VALOR_UFERMS = 53.70 // Maio/2026 — atualizar conforme resolução SEFAZ/MS
+
+function FormularioALIM({ form, setForm, onVoltar, onGerar, fiscal }) {
+  const set = (campo) => (e) => setForm(f => ({ ...f, [campo]: e.target.value }))
+
+  const addMerc = () => setForm(f => ({ ...f, mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }, ...f.mercadoria] }))
+  const removeMerc = (i) => setForm(f => ({ ...f, mercadoria: f.mercadoria.filter((_, idx) => idx !== i) }))
+  const setMerc = (i, campo, val) => setForm(f => {
+    const m = [...f.mercadoria]; m[i] = { ...m[i], [campo]: val }; return { ...f, mercadoria: m }
+  })
+
+  const uferms = calcularUFERMS(form.valor_nota_mdfe)
+  const valorMultaMdfe = (uferms * VALOR_UFERMS).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+
+  const isFlagrante = form.tipoAlim === 'sem_nota' || form.tipoAlim === 'inidonia'
+  const isMdfe = form.tipoAlim === 'mdfe'
+
+  const obrigatoriosOk = form.tipoAlim && (
+    isFlagrante
+      ? form.data && form.hora && form.endereco && form.placas?.[0] && form.motorista && form.sujeito && form.mercadoria[0]?.descricao && form.valor_mercadoria && form.aliquota && form.valor_imposto
+      : form.data && form.hora && form.endereco && form.placas?.[0] && form.motorista && form.sujeito && form.tipo_mdfe && form.valor_nota_mdfe
+  )
+
+  const btnStyle = (ativo) => ({
+    flex: 1, padding: '10px', borderRadius: '8px', cursor: 'pointer',
+    fontFamily: "'DM Sans', sans-serif", fontSize: '0.82rem',
+    background: ativo ? 'rgba(138,106,170,0.2)' : 'rgba(255,255,255,0.03)',
+    border: ativo ? '1px solid rgba(138,106,170,0.5)' : '1px solid rgba(255,255,255,0.07)',
+    color: ativo ? '#b090d0' : '#5a6a7a', transition: 'all 0.15s'
+  })
+
+  return (
+    <div style={{ maxWidth: '820px', margin: '0 auto', padding: '24px' }}>
+      <BtnVoltar onClick={onVoltar} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.4rem', color: '#b090d0', fontWeight: 700 }}>
+          ⚡ Gerar ALIM
+        </div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: '#4a5a6a' }}>
+          Auto de Lançamento e Imposição de Multa
+        </div>
+      </div>
+
+      {/* TIPO DE ALIM */}
+      <div style={{ ...secaoStyle, borderColor: 'rgba(138,106,170,0.2)' }}>
+        <div style={{ ...secaoTituloStyle, color: '#b090d0' }}>⚡ Tipo de infração</div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {[
+            { value: 'sem_nota', label: '📦 Sem nota fiscal' },
+            { value: 'inidonia', label: '⚠️ Nota fiscal inidônea' },
+            { value: 'mdfe', label: '📄 Falta / irregularidade de MDF-e' },
+          ].map(op => (
+            <button key={op.value} onClick={() => setForm(f => ({ ...f, tipoAlim: op.value }))}
+              style={{ ...btnStyle(form.tipoAlim === op.value), flex: 'none', padding: '10px 18px' }}>
+              {op.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {form.tipoAlim && (
+        <>
+          {/* ABORDAGEM */}
+          <div style={secaoStyle}>
+            <div style={secaoTituloStyle}>📍 Abordagem</div>
+            <Grid cols={2}>
+              <Campo label="Data *"><InputComFocus type="date" style={inputStyle} value={form.data} onChange={set('data')} /></Campo>
+              <Campo label="Hora *"><InputComFocus type="time" style={inputStyle} value={form.hora} onChange={set('hora')} /></Campo>
+            </Grid>
+            <Campo label="Endereço completo *">
+              <InputComFocus style={inputStyle} value={form.endereco} onChange={set('endereco')} placeholder="Rua, número, bairro" />
+            </Campo>
+            <Campo label="Cidade">
+              <InputComFocus style={inputStyle} value={form.cidade} onChange={set('cidade')} />
+            </Campo>
+          </div>
+
+          {/* VEÍCULO E CONDUTOR */}
+          <div style={secaoStyle}>
+            <div style={secaoTituloStyle}>🚛 Veículo e condutor</div>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={labelStyle}>Placa(s) *</label>
+              {form.placas.map((placa, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                  <InputComFocus
+                    style={{ ...inputStyle, flex: 1 }}
+                    value={placa}
+                    onChange={e => {
+                      const val = mascaraPlaca(e.target.value)
+                      setForm(f => { const p = [...f.placas]; p[i] = val; return { ...f, placas: p } })
+                    }}
+                    placeholder={i === 0 ? 'ABC-1D23 (tração)' : 'ABC-1D23 (reboque)'}
+                  />
+                  {i === 0 ? (
+                    <button onClick={() => setForm(f => ({ ...f, placas: [...f.placas, ''] }))}
+                      style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '6px', color: '#c9a84c', padding: '8px 12px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                      + Reboque
+                    </button>
+                  ) : (
+                    <button onClick={() => setForm(f => ({ ...f, placas: f.placas.filter((_, idx) => idx !== i) }))}
+                      style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '1rem', padding: '4px 8px' }}>✕</button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Grid cols={2}>
+              <Campo label="Nome do motorista *">
+                <InputComFocus style={inputStyle} value={form.motorista} onChange={set('motorista')} placeholder="Nome completo" />
+              </Campo>
+              <Campo label="CPF do motorista">
+                <InputComFocus style={inputStyle} value={form.cpf} onChange={e => setForm(f => ({ ...f, cpf: mascaraCPF(e.target.value) }))} placeholder="000.000.000-00" />
+              </Campo>
+            </Grid>
+          </div>
+
+          {/* SUJEITO PASSIVO */}
+          <div style={secaoStyle}>
+            <div style={secaoTituloStyle}>🏢 Sujeito passivo</div>
+            <Campo label="Nome / Razão social *">
+              <InputComFocus style={inputStyle} value={form.sujeito} onChange={set('sujeito')} placeholder="Nome ou razão social" />
+            </Campo>
+            <Grid cols={2}>
+              <Campo label="IE">
+                <InputComFocus style={inputStyle} value={form.ie} onChange={e => setForm(f => ({ ...f, ie: mascaraIE(e.target.value) }))} placeholder="00.000.000-0" />
+              </Campo>
+              <Campo label="CNPJ / CPF">
+                <InputComFocus style={inputStyle} value={form.cnpj} onChange={e => {
+                  const v = e.target.value.replace(/\D/g, '')
+                  setForm(f => ({ ...f, cnpj: v.length <= 11 ? mascaraCPF(v) : mascaraCNPJ(v) }))
+                }} placeholder="00.000.000/0000-00" />
+              </Campo>
+            </Grid>
+          </div>
+
+          {/* MERCADORIA — só para flagrante */}
+          {isFlagrante && (
+            <>
+              <div style={secaoStyle}>
+                <div style={{ ...secaoTituloStyle, justifyContent: 'space-between' }}>
+                  <span>📦 Mercadoria</span>
+                  <button onClick={addMerc} style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '6px', color: '#c9a84c', padding: '4px 12px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem' }}>+ Item</button>
+                </div>
+                {form.mercadoria.map((m, i) => (
+                  <div key={i} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#5a6a7a' }}>Item {form.mercadoria.length - i}</span>
+                      {form.mercadoria.length > 1 && (
+                        <button onClick={() => removeMerc(i)} style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
+                      )}
+                    </div>
+                    <Campo label="Descrição *">
+                      <InputComFocus style={inputStyle} value={m.descricao} onChange={e => setMerc(i, 'descricao', e.target.value)} placeholder="Ex: 760 sacos de cimento Itaú 50kg" />
+                    </Campo>
+                    <Grid cols={3}>
+                      <Campo label="Quantidade">
+                        <InputComFocus style={inputStyle} value={m.quantidade} onChange={e => setMerc(i, 'quantidade', e.target.value)} placeholder="Ex: 760" />
+                      </Campo>
+                      <Campo label="Unidade">
+                        <InputComFocus style={inputStyle} value={m.unidade} onChange={e => setMerc(i, 'unidade', e.target.value)} placeholder="sacos, caixas, kg..." />
+                      </Campo>
+                      <Campo label="Valor unitário (R$)">
+                        <InputComFocus style={inputStyle} value={m.valor} onChange={e => setMerc(i, 'valor', mascaraValor(e.target.value))} placeholder="0,00" />
+                      </Campo>
+                    </Grid>
+                  </div>
+                ))}
+              </div>
+
+              {/* INFRAÇÃO */}
+              <div style={secaoStyle}>
+                <div style={secaoTituloStyle}>⚖️ Infração e valores</div>
+
+                {form.tipoAlim === 'inidonia' && (
+                  <Campo label="Motivo da inidoneidade (art. 93)">
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.motivo_inidonia} onChange={set('motivo_inidonia')}>
+                      <option value="">Selecione o inciso...</option>
+                      {INCISOS.map(inc => <option key={inc.value} value={inc.value}>{inc.label}</option>)}
+                    </select>
+                  </Campo>
+                )}
+
+                <Grid cols={3}>
+                  <Campo label="Valor total das mercadorias (R$) *">
+                    <InputComFocus style={inputStyle} value={form.valor_mercadoria} onChange={e => setForm(f => ({ ...f, valor_mercadoria: mascaraValor(e.target.value) }))} placeholder="0,00" />
+                  </Campo>
+                  <Campo label="Alíquota ICMS (%) *">
+                    <InputComFocus style={inputStyle} value={form.aliquota} onChange={set('aliquota')} placeholder="Ex: 17" />
+                  </Campo>
+                  <Campo label="Valor do imposto (R$) *">
+                    <InputComFocus style={inputStyle} value={form.valor_imposto} onChange={e => setForm(f => ({ ...f, valor_imposto: mascaraValor(e.target.value) }))} placeholder="0,00" />
+                  </Campo>
+                </Grid>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.8rem', color: '#7a9ab8' }}>
+                    <input type="checkbox" checked={form.tem_fecomp} onChange={e => setForm(f => ({ ...f, tem_fecomp: e.target.checked }))} />
+                    Incide FECOMP (2% adicional)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '0.8rem', color: '#7a9ab8' }}>
+                    <input type="checkbox" checked={form.tem_segunda_infracao} onChange={e => setForm(f => ({ ...f, tem_segunda_infracao: e.target.checked }))} />
+                    2ª infração (art. 117, III, "a" — 50%)
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* MDF-e */}
+          {isMdfe && (
+            <div style={secaoStyle}>
+              <div style={secaoTituloStyle}>📄 MDF-e</div>
+
+              <Campo label="Tipo de irregularidade *">
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { value: 'falta_emissao', label: 'Falta de emissão' },
+                    { value: 'falta_encerramento', label: 'Falta de encerramento' },
+                    { value: 'encerramento_prematuro', label: 'Encerramento prematuro' },
+                  ].map(op => (
+                    <button key={op.value} onClick={() => setForm(f => ({ ...f, tipo_mdfe: op.value }))}
+                      style={{ ...btnStyle(form.tipo_mdfe === op.value), flex: 'none', padding: '8px 14px' }}>
+                      {op.label}
+                    </button>
+                  ))}
+                </div>
+              </Campo>
+
+              {(form.tipo_mdfe === 'falta_encerramento' || form.tipo_mdfe === 'encerramento_prematuro') && (
+                <Campo label="Número do MDF-e">
+                  <InputComFocus style={inputStyle} value={form.numero_mdfe} onChange={set('numero_mdfe')} placeholder="Ex: 000123456" />
+                </Campo>
+              )}
+
+              <Campo label="Número do TVF vinculado">
+                <InputComFocus style={inputStyle} value={form.numero_tvf} onChange={set('numero_tvf')} placeholder="Ex: 1023651/99" />
+              </Campo>
+
+              <Campo label="Valor das mercadorias transportadas (R$) *">
+                <InputComFocus style={inputStyle} value={form.valor_nota_mdfe} onChange={e => setForm(f => ({ ...f, valor_nota_mdfe: mascaraValor(e.target.value) }))} placeholder="0,00" />
+              </Campo>
+
+              {form.valor_nota_mdfe && (
+                <div style={{
+                  background: 'rgba(138,106,170,0.08)',
+                  border: '1px solid rgba(138,106,170,0.2)',
+                  borderRadius: '8px', padding: '14px', marginTop: '4px'
+                }}>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#7a6a9a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                    Cálculo da multa (Resolução SEFAZ/MS nº 3.507)
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                    {[
+                      { label: 'UFERMS', valor: uferms },
+                      { label: 'Valor UFERMS', valor: `R$ ${VALOR_UFERMS.toFixed(2).replace('.', ',')}` },
+                      { label: 'Multa bruta', valor: `R$ ${valorMultaMdfe}` },
+                    ].map(item => (
+                      <div key={item.label} style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: '#5a6a7a', marginBottom: '4px' }}>{item.label}</div>
+                        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.1rem', color: '#b090d0', fontWeight: 700 }}>{item.valor}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: '#4a5a6a', marginTop: '10px', textAlign: 'center' }}>
+                    Multa líquida (redução art. 118): R$ {((uferms * VALOR_UFERMS) * 0.4).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (40% com pagamento em 20 dias)
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* OBS */}
+          <div style={secaoStyle}>
+            <div style={secaoTituloStyle}>📝 Observações adicionais</div>
+            <TextareaComFocus
+              style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+              value={form.obs}
+              onChange={set('obs')}
+              placeholder="Detalhes adicionais sobre a ação fiscal, se necessário..."
+            />
+          </div>
+
+          {!obrigatoriosOk && (
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: '#c87070', marginBottom: '12px' }}>
+              ⚠ Preencha todos os campos obrigatórios (*)
+            </p>
+          )}
+
+          <button onClick={onGerar} disabled={!obrigatoriosOk} style={{
+            width: '100%', padding: '15px',
+            background: obrigatoriosOk ? 'linear-gradient(135deg, #6a4a9a, #8a6aaa)' : 'rgba(255,255,255,0.05)',
+            color: obrigatoriosOk ? '#fff' : '#3a4a5a',
+            border: 'none', borderRadius: '10px',
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '0.92rem', fontWeight: 700,
+            cursor: obrigatoriosOk ? 'pointer' : 'not-allowed',
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            boxShadow: obrigatoriosOk ? '0 8px 24px rgba(100,70,150,0.3)' : 'none',
+            transition: 'all 0.2s'
+          }}>
+            ⚡ Gerar matéria tributável e penalidade
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+function montarMensagemALIM(form) {
+  if (form.tipoAlim === 'sem_nota' || form.tipoAlim === 'inidonia') {
+    const mercs = form.mercadoria.map(m =>
+      `${m.quantidade} ${m.unidade} de ${m.descricao}${m.valor ? ` — R$ ${m.valor} cada` : ''}`
+    ).join('; ')
+    const tipoInfracao = form.tipoAlim === 'sem_nota'
+      ? 'mercadoria desacompanhada de documentação fiscal (sem nota fiscal)'
+      : `documentação fiscal inidônea — ${form.motivo_inidonia}`
+    return `GERAR ALIM — Matéria Tributável (campo 3) e Descrição da Infração e Penalidade (campo 4):
+
+Tipo de infração: ${tipoInfracao}
+Data do flagrante: ${form.data}
+Hora: ${form.hora}
+Local: ${form.endereco}, ${form.cidade}/MS
+Placa(s): ${form.placas.filter(p => p).join(' / ')}
+Motorista: ${form.motorista}${form.cpf ? ` — CPF: ${form.cpf}` : ''}
+Sujeito passivo: ${form.sujeito}${form.ie ? ` — IE: ${form.ie}` : ''}${form.cnpj ? ` — CNPJ/CPF: ${form.cnpj}` : ''}
+Mercadoria: ${mercs}
+Valor total das mercadorias: R$ ${form.valor_mercadoria}
+Alíquota ICMS: ${form.aliquota}%
+Valor do imposto: R$ ${form.valor_imposto}
+Incide FECOMP (2%): ${form.tem_fecomp ? 'Sim' : 'Não'}
+Segunda infração (art. 117, III, "a" — 50%): ${form.tem_segunda_infracao ? 'Sim' : 'Não'}${form.obs ? `
+Observações: ${form.obs}` : ''}`
+  }
+
+  // MDF-e
+  const uferms = calcularUFERMS(form.valor_nota_mdfe)
+  const tipoMdfe = {
+    falta_emissao: 'Falta de emissão do MDF-e antes do início do transporte',
+    falta_encerramento: 'Falta de encerramento do MDF-e após conclusão do transporte',
+    encerramento_prematuro: 'Encerramento prematuro do MDF-e durante o transporte'
+  }[form.tipo_mdfe] || form.tipo_mdfe
+
+  return `GERAR ALIM — Matéria Tributável (campo 3) e Descrição da Infração e Penalidade (campo 4):
+
+Tipo de infração: MDF-e — ${tipoMdfe}
+Data da fiscalização: ${form.data}
+Hora: ${form.hora}
+Local: ${form.endereco}, ${form.cidade}/MS
+Placa(s): ${form.placas.filter(p => p).join(' / ')}
+Motorista: ${form.motorista}${form.cpf ? ` — CPF: ${form.cpf}` : ''}
+Sujeito passivo: ${form.sujeito}${form.ie ? ` — IE: ${form.ie}` : ''}${form.cnpj ? ` — CNPJ/CPF: ${form.cnpj}` : ''}
+${form.numero_mdfe ? `Número do MDF-e: ${form.numero_mdfe}` : ''}
+${form.numero_tvf ? `TVF vinculado: nº ${form.numero_tvf}` : ''}
+Valor das mercadorias transportadas: R$ ${form.valor_nota_mdfe}
+Quantidade de UFERMS aplicável: ${uferms} UFERMS
+Valor da UFERMS (maio/2026): R$ 53,70
+Valor da multa bruta: R$ ${(uferms * 53.70).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+Fundamentação: art. 117, IV, "x" da Lei nº 1.810/97${form.obs ? `
+Observações: ${form.obs}` : ''}`
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function Home() {
   const router = useRouter()
@@ -802,6 +1175,27 @@ export default function Home() {
     texto_contribuinte: ''
   })
 
+  const [formALIM, setFormALIM] = useState({
+    tipoAlim: '', // 'sem_nota' | 'inidonia' | 'mdfe'
+    // Campos comuns (flagrante)
+    data: '', hora: '', endereco: '', cidade: 'Campo Grande',
+    placas: [''], motorista: '', cpf: '',
+    sujeito: '', ie: '', cnpj: '',
+    // Mercadoria (sem nota / inidônia)
+    mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }],
+    // Inidônia
+    motivo_inidonia: '',
+    // Valores fiscais
+    valor_mercadoria: '', aliquota: '', valor_imposto: '',
+    tem_fecomp: false,
+    tem_segunda_infracao: false,
+    // MDF-e
+    tipo_mdfe: '', // 'falta_emissao' | 'falta_encerramento' | 'encerramento_prematuro'
+    numero_mdfe: '',
+    numero_tvf: '',
+    valor_nota_mdfe: '',
+    obs: ''
+  })
   const [historicoDocumentos, setHistoricoDocumentos] = useState([])
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [datasExpandidas, setDatasExpandidas] = useState({})
@@ -1533,6 +1927,7 @@ export default function Home() {
                 { id: 'tvf', icone: '📋', titulo: 'Gerar TVF', desc: 'Termo de Verificação Fiscal — sujeito passivo com IE ativa no MS', cor: '#c9a84c' },
                 { id: 'ta', icone: '🔒', titulo: 'Gerar TA', desc: 'Termo de Apreensão — sem IE no MS, clandestino ou risco de desaparecimento', cor: '#c87050' },
                 { id: 'contestacao', icone: '⚖️', titulo: 'Contestação / DESK', desc: 'Resposta a impugnação de ALIM ou reclamação de contribuinte via DESK', cor: '#6a9a6a' },
+                { id: 'alim', icone: '⚡', titulo: 'Gerar ALIM', desc: 'Auto de Lançamento e Imposição de Multa — matéria tributável e penalidade', cor: '#8a6aaa' },
               ].map(modo => (
                 <button
                   key={modo.id}
@@ -1710,6 +2105,22 @@ export default function Home() {
             onGerar={() => {
               const msg = montarMensagemTA(formTA)
               setModoOrigem('ta')
+              setModoAtivo('consulta')
+              enviar(msg)
+            }}
+          />
+        )}
+
+        {/* FORMULÁRIO ALIM */}
+        {mensagens.length === 0 && modoAtivo === 'alim' && (
+          <FormularioALIM
+            form={formALIM}
+            setForm={setFormALIM}
+            fiscal={fiscal}
+            onVoltar={() => setModoAtivo(null)}
+            onGerar={() => {
+              const msg = montarMensagemALIM(formALIM)
+              setModoOrigem('alim')
               setModoAtivo('consulta')
               enviar(msg)
             }}
