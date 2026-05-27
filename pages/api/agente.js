@@ -692,13 +692,14 @@ REGRAS FINAIS INVIOLÁVEIS
     // Preço claude-sonnet-4-6: $3/M input, $15/M output
     const custoEstimado = (tokensEntrada * 0.000003) + (tokensSaida * 0.000015)
 
-    supabaseAdmin.from('logs_uso').insert({
+    const { error: logError } = await supabaseAdmin.from('logs_uso').insert({
       fiscal_id: user.id,
       fiscal_nome: perfil?.nome || user.email,
       tokens_entrada: tokensEntrada,
       tokens_saida: tokensSaida,
       custo_estimado: custoEstimado
-    }).then(() => {}).catch(() => {}) // fire-and-forget, não bloqueia resposta
+    })
+    if (logError) console.error('[logs_uso] Erro ao registrar uso:', JSON.stringify(logError))
 
     return res.status(200).json({
       resposta: antData.content[0].text,
