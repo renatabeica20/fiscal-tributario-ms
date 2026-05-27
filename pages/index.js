@@ -204,17 +204,17 @@ function mascaraTelefone(v) {
 
 const inputStyle = {
   width: '100%', padding: '10px 14px',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(201,168,76,0.15)',
+  background: 'rgba(255,255,255,0.08)',
+  border: '1px solid rgba(201,168,76,0.35)',
   borderRadius: '8px', fontSize: '0.9rem',
-  color: '#c8c0b0', outline: 'none',
+  color: '#e8e0d0', outline: 'none',
   fontFamily: "'DM Sans', sans-serif",
   boxSizing: 'border-box', transition: 'border-color 0.2s'
 }
 
 const labelStyle = {
   fontFamily: "'DM Sans', sans-serif",
-  fontSize: '0.68rem', color: '#3a4a5a',
+  fontSize: '0.68rem', color: '#7a9ab8',
   textTransform: 'uppercase', letterSpacing: '0.08em',
   display: 'block', marginBottom: '5px'
 }
@@ -275,7 +275,7 @@ const INCISOS = [
 function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
   const set = (campo) => (e) => setForm(f => ({ ...f, [campo]: e.target.value }))
 
-  const addMerc = () => setForm(f => ({ ...f, mercadoria: [...f.mercadoria, { descricao: '', quantidade: '', unidade: 'unidades', valor: '' }] }))
+  const addMerc = () => setForm(f => ({ ...f, mercadoria: [{ descricao: '', quantidade: '', unidade: 'unidades', valor: '' }, ...f.mercadoria] }))
   const removeMerc = (i) => setForm(f => ({ ...f, mercadoria: f.mercadoria.filter((_, idx) => idx !== i) }))
   const setMerc = (i, campo, val) => setForm(f => {
     const m = [...f.mercadoria]
@@ -400,7 +400,7 @@ function FormularioDocumento({ tipo, form, setForm, onVoltar, onGerar }) {
         {form.mercadoria.map((m, i) => (
           <div key={i} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#5a6a7a' }}>Item {i + 1}</span>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#5a6a7a' }}>Item {form.mercadoria.length - i}</span>
               {form.mercadoria.length > 1 && (
                 <button onClick={() => removeMerc(i)} style={{ background: 'none', border: 'none', color: '#c87070', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
               )}
